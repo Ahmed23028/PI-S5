@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
 import { Plus, Search, FileDown, Edit, Trash2, FileText, X, Upload, FileSpreadsheet, Download, Info, MapPin, Phone, Calendar } from 'lucide-react';
-import { Student } from '../../types';
+import { Student, getSubjectDisplayName } from '../../types';
 import Input from '../../components/Input';
 import { useSchoolContext } from '../../context/SchoolContext';
 import * as XLSX from 'xlsx';
 
+const LEVEL_OPTIONS = [1, 2, 3, 4, 5, 6] as const;
+
 const Students: React.FC = () => {
-  const { students, classes, subjects, results, addStudent, bulkAddStudents, updateStudent, deleteStudent, t, language } = useSchoolContext();
+  const { students, classes, subjects, results, addStudent, bulkAddStudents, updateStudent, deleteStudent, addClass, t, language, currentUser } = useSchoolContext();
+  const isTeacher = currentUser?.role === 'teacher';
+
+  // Options pour le menu Classe : classes existantes ou niveaux 1–6 si aucune classe
+  const classOptions = classes.length > 0
+    ? classes
+    : LEVEL_OPTIONS.map(level => ({ id: `level_${level}`, name: t(`level_${level}` as any), level }));
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
+  const [nniFilter, setNniFilter] = useState('');
   
   // Modals
   const [showModal, setShowModal] = useState(false);
@@ -21,64 +30,67 @@ const Students: React.FC = () => {
   const [reportSemester, setReportSemester] = useState<1 | 2 | 3>(1);
 
   const [formData, setFormData] = useState<Partial<Student>>({
-    fullName: '', birthDate: '', gender: 'M', classId: '', parentPhone: '', address: '', notes: ''
+    fullName: '', nni: '', birthDate: '', gender: 'M', classId: '', parentPhone: '', address: '', notes: ''
   });
 
   const getClassName = (classId: string) => classes.find(c => c.id === classId)?.name || t('unknown');
 
-  // حساب المعدل العام (متوسط جميع الفصول المتاحة)
+  // Moyenne école : total max = somme des barèmes des matières du niveau (souvent 200). Chaque matière garde son barème (20, 10, 30, 40, 50...).
+  // total_élève = somme des notes brutes. Moyenne sur 20 = (total_élève / total_max_du_niveau) × 20
   const calculateGeneralAverage = (studentId: string, classId: string) => {
-    // Fix: Using level-based filtering to match the active subjects model which groups subjects by level
     const currentClass = classes.find(c => c.id === classId);
     const classSubjects = subjects.filter(s => s.level === currentClass?.level);
     if (classSubjects.length === 0) return '--';
 
-    let totalWeightedScore = 0;
-    let totalCoefficients = 0;
+    const totalMaxNiveau = classSubjects.reduce((sum, s) => sum + (s.totalPoints || 20), 0);
+    let totalEleve = 0;
     let hasAnyResult = false;
 
-    // نحسب لجميع الفصول (1, 2, 3)
-    [1, 2, 3].forEach(sem => {
-      const semesterResults = results.filter(r => r.studentId === studentId && r.semester === sem);
-      
-      classSubjects.forEach(subj => {
-        const testRes = semesterResults.find(r => r.subjectId === subj.id && r.type === 'test');
-        const examRes = semesterResults.find(r => r.subjectId === subj.id && r.type === 'exam');
+    classSubjects.forEach(subj => {
+      const subjectResults = results.filter(r => r.studentId === studentId && r.subjectId === subj.id);
+      if (subjectResults.length === 0) return;
 
+      const semesters = [1, 2, 3];
+      const notesSemestre: number[] = [];
+      semesters.forEach(sem => {
+        const semesterResults = subjectResults.filter(r => r.semester === sem);
+        const testRes = semesterResults.find(r => r.type === 'test');
+        const examRes = semesterResults.find(r => r.type === 'exam');
         if (testRes || examRes) {
-          hasAnyResult = true;
-          let subjScore = 0;
+          let noteSem = 0;
           if (testRes && examRes) {
-            subjScore = (testRes.score + examRes.score) / 2;
+            noteSem = (testRes.score + examRes.score) / 2;
           } else {
-            subjScore = (testRes || examRes)!.score;
+            noteSem = (testRes || examRes)!.score;
           }
-          // Convert score to normalized scale (out of 20) based on totalPoints
-          if (subj.totalPoints > 0) {
-            const normalizedScore = (subjScore / subj.totalPoints) * 20;
-            totalWeightedScore += normalizedScore;
-            totalCoefficients += 1; // Each subject counts as 1 now
-          }
+          notesSemestre.push(noteSem);
         }
       });
+
+      if (notesSemestre.length === 0) return;
+      const noteMatiere = notesSemestre.reduce((a, b) => a + b, 0) / notesSemestre.length;
+      totalEleve += noteMatiere;
+      hasAnyResult = true;
     });
 
-    if (!hasAnyResult || totalCoefficients === 0) return '--';
-    return (totalWeightedScore / totalCoefficients).toFixed(2);
+    if (!hasAnyResult || totalMaxNiveau <= 0) return '--';
+    const moyenneSur20 = (totalEleve / totalMaxNiveau) * 20;
+    return moyenneSur20.toFixed(2);
   };
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.fullName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClass = selectedClass ? student.classId === selectedClass : true;
-    return matchesSearch && matchesClass;
+    const matchesNni = !nniFilter.trim() || (student.nni && student.nni.toLowerCase().includes(nniFilter.trim().toLowerCase()));
+    return matchesSearch && matchesClass && matchesNni;
   });
 
   const handleExportCSV = () => {
     const BOM = "\uFEFF"; 
-    const header = `${t('full_name')},${t('birth_date')},${t('gender')},${t('class')},${t('parent_phone')},${t('address')},${t('general_average')}\n`;
+    const header = `${t('full_name')},${t('nni')},${t('birth_date')},${t('gender')},${t('class')},${t('parent_phone')},${t('address')},${t('general_average')}\n`;
     const rows = filteredStudents.map(s => {
       const avg = calculateGeneralAverage(s.id, s.classId);
-      return `"${s.fullName}","${s.birthDate}","${s.gender === 'M' ? t('male') : t('female')}","${getClassName(s.classId)}","${s.parentPhone}","${s.address}","${avg}"`;
+      return `"${s.fullName}","${s.nni || ''}","${s.birthDate}","${s.gender === 'M' ? t('male') : t('female')}","${getClassName(s.classId)}","${s.parentPhone}","${s.address}","${avg}"`;
     }).join("\n");
 
     const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(BOM + header + rows);
@@ -127,21 +139,25 @@ const Students: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-800">{t('students_management')}</h2>
-          <p className="text-slate-500 font-medium">{t('students_desc')}</p>
+          <p className="text-slate-500 font-medium">{isTeacher ? t('students_desc_teacher') : t('students_desc')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
            <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition font-bold shadow-sm active:scale-95">
              <FileDown className="w-4 h-4 text-primary-500" />
              <span>{t('export_csv')}</span>
            </button>
-           <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition font-bold shadow-sm active:scale-95">
-             <FileSpreadsheet className="w-4 h-4 text-green-500" />
-             <span>{t('import_excel')}</span>
-           </button>
-           <button onClick={() => { setFormData({ fullName: '', gender: 'M', classId: classes[0]?.id || '' }); setEditingId(null); setShowModal(true); }} className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-200 font-bold active:scale-95">
-             <Plus className="w-4 h-4" />
-             <span>{t('add_student')}</span>
-           </button>
+           {!isTeacher && (
+             <>
+               <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition font-bold shadow-sm active:scale-95">
+                 <FileSpreadsheet className="w-4 h-4 text-green-500" />
+                 <span>{t('import_excel')}</span>
+               </button>
+               <button onClick={() => { setFormData({ fullName: '', nni: '', gender: 'M', classId: classes[0]?.id || '' }); setEditingId(null); setShowModal(true); }} className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-200 font-bold active:scale-95">
+                 <Plus className="w-4 h-4" />
+                 <span>{t('add_student')}</span>
+               </button>
+             </>
+           )}
         </div>
       </div>
 
@@ -149,6 +165,15 @@ const Students: React.FC = () => {
         <div className="relative flex-1">
           <Input label="" placeholder={t('search_placeholder')} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full" />
           <Search className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} top-3 w-5 h-5 text-slate-400`} />
+        </div>
+        <div className="w-full md:w-48">
+          <input
+            type="text"
+            placeholder={t('filter_by_nni')}
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 font-bold text-slate-700 placeholder:text-slate-400"
+            value={nniFilter}
+            onChange={(e) => setNniFilter(e.target.value)}
+          />
         </div>
         <div className="w-full md:w-64">
           <select className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary-500/10 font-bold text-slate-700" value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
@@ -164,6 +189,7 @@ const Students: React.FC = () => {
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
                 <th className="px-6 py-5 font-black text-slate-500 uppercase tracking-wider text-[11px]">{t('full_name')}</th>
+                <th className="px-6 py-5 font-black text-slate-500 uppercase tracking-wider text-[11px]">{t('nni')}</th>
                 <th className="px-6 py-5 font-black text-slate-500 uppercase tracking-wider text-[11px]">{t('class')}</th>
                 <th className="px-4 py-5 font-black text-slate-500 uppercase tracking-wider text-[11px]">{t('birth_date')}</th>
                 <th className="px-4 py-5 font-black text-slate-500 uppercase tracking-wider text-[11px]">{t('parent_phone')}</th>
@@ -184,6 +210,9 @@ const Students: React.FC = () => {
                            <span>{student.fullName}</span>
                            <span className="text-[10px] text-slate-400 font-medium">ID: {student.id}</span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600 text-sm font-medium tabular-nums">
+                        {student.nni || '--'}
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-3 py-1 rounded-lg bg-primary-50 text-primary-700 text-[11px] font-black border border-primary-100">
@@ -220,15 +249,19 @@ const Students: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => { setViewingStudent(student); setShowReportModal(true); }} className="p-2 text-primary-600 hover:bg-primary-50 rounded-xl transition" title={t('report_card')}><FileText className="w-5 h-5" /></button>
-                          <button onClick={() => { setFormData(student); setEditingId(student.id); setShowModal(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"><Edit className="w-5 h-5" /></button>
-                          <button onClick={() => { if(window.confirm(t('delete_confirm_student'))) deleteStudent(student.id); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><Trash2 className="w-5 h-5" /></button>
+                          {!isTeacher && (
+                            <>
+                              <button onClick={() => { setFormData(student); setEditingId(student.id); setShowModal(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"><Edit className="w-5 h-5" /></button>
+                              <button onClick={() => { if(window.confirm(t('delete_confirm_student'))) deleteStudent(student.id); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><Trash2 className="w-5 h-5" /></button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
                   )
                 }) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center">
+                  <td colSpan={8} className="px-6 py-20 text-center">
                     <Info className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                     <p className="text-slate-400 font-bold">{t('no_data')}</p>
                   </td>
@@ -252,6 +285,7 @@ const Students: React.FC = () => {
              </div>
              <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Input label={t('full_name')} placeholder="الاسم الرباعي" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
+                <Input label={t('nni')} placeholder={t('nni_placeholder')} value={formData.nni || ''} onChange={e => setFormData({...formData, nni: e.target.value})} />
                 <Input label={t('birth_date')} type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} />
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-1">{t('gender')}</label>
@@ -264,7 +298,7 @@ const Students: React.FC = () => {
                   <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-1">{t('class')}</label>
                   <select className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[20px] focus:ring-4 focus:ring-primary-500/10 outline-none transition-all font-bold text-slate-800" value={formData.classId} onChange={e => setFormData({...formData, classId: e.target.value})}>
                     <option value="" disabled>{t('select_class')}</option>
-                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {classOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <Input label={t('parent_phone')} placeholder="مثال: 44332211" value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} />
@@ -276,9 +310,21 @@ const Students: React.FC = () => {
              </div>
              <div className="p-10 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/30">
                <button onClick={() => setShowModal(false)} className="px-8 py-4 text-slate-500 hover:bg-slate-200 rounded-2xl font-black transition-all">{t('cancel')}</button>
-               <button onClick={() => { 
+               <button onClick={async () => { 
                  if(!formData.fullName || !formData.classId) { alert(t('fill_required')); return; } 
-                 editingId ? updateStudent({ ...formData, id: editingId } as Student) : addStudent(formData as any); 
+                 let classId = formData.classId;
+                 if (classId.startsWith('level_')) {
+                   const level = parseInt(classId.replace('level_', ''), 10);
+                   const levelName = t(`level_${level}` as any);
+                   const created = await addClass({ name: levelName, level });
+                   if (!created?.id) return;
+                   classId = created.id;
+                 }
+                 if (editingId) {
+                   updateStudent({ ...formData, id: editingId, classId } as Student);
+                 } else {
+                   addStudent({ ...formData, classId } as any);
+                 }
                  setShowModal(false); 
                }} className="px-12 py-4 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-all font-black shadow-lg shadow-primary-200 active:scale-95">
                  {editingId ? t('save_changes') : t('add')}
@@ -376,7 +422,7 @@ const Students: React.FC = () => {
 
                          return (
                            <tr key={subject.id} className="hover:bg-slate-50/50 transition-colors">
-                             <td className="py-5 px-8 font-bold text-slate-700">{subject.name}</td>
+                             <td className="py-5 px-8 font-bold text-slate-700">{getSubjectDisplayName(subject, language)}</td>
                              <td className="py-5 px-8 text-center font-black text-primary-600">{testRes ? testRes.score : '--'}</td>
                              <td className="py-5 px-8 text-center font-black text-orange-500">{examRes ? examRes.score : '--'}</td>
                              <td className="py-5 px-8 text-center text-slate-400 font-bold">{subject.totalPoints}</td>

@@ -1,13 +1,20 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, School, Globe, AlertCircle, Loader2 } from 'lucide-react';
 import Input from '../../components/Input';
+import { useTranslation } from 'react-i18next';
 import { useSchoolContext } from '../../context/SchoolContext';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { t, language, toggleLanguage, fetchData, fetchCurrentUser } = useSchoolContext();
+  const { t, i18n } = useTranslation();
+  const { fetchData, fetchCurrentUser } = useSchoolContext();
+  const language = i18n.language === 'ar' ? 'ar' : 'fr';
+  const toggleLanguage = () => {
+    const next = language === 'ar' ? 'fr' : 'ar';
+    i18n.changeLanguage(next);
+    localStorage.setItem('app_lang', next);
+  };
   const [username, setUsername] = useState(''); 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -45,14 +52,14 @@ const Login: React.FC = () => {
       } else {
         const errData = await response.json().catch(() => ({}));
         if (response.status === 401) {
-           setError('اسم المستخدم أو كلمة المرور غير صحيحة. تأكد من بيانات الـ Superuser.');
+           setError(t('login_error_bad_credentials'));
         } else {
-           setError(errData.detail || 'حدث خطأ غير متوقع في السيرفر.');
+           setError(errData.detail || t('login_error_server_unexpected'));
         }
       }
     } catch (err) {
       console.error("Login attempt failed:", err);
-      setError('تعذر الاتصال بالخادم. تأكد من تشغيل Django server على المنفذ 8000.');
+      setError(t('login_error_server_offline'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +72,7 @@ const Login: React.FC = () => {
         className="absolute top-4 right-4 rtl:right-auto rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm hover:bg-slate-50 text-slate-700 transition font-bold border border-slate-200"
       >
         <Globe className="w-4 h-4 text-primary-500" />
-        <span className="text-sm">{language === 'ar' ? 'Français' : 'العربية'}</span>
+        <span className="text-sm">{language === 'ar' ? t('lang_switch_fr') : t('lang_switch_ar')}</span>
       </button>
 
       <div className="bg-white p-10 rounded-[40px] shadow-soft-xl w-full max-w-md border border-slate-100">
@@ -94,7 +101,7 @@ const Login: React.FC = () => {
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="أدخل اسم الـ Superuser"
+                placeholder={t('login_placeholder_username')}
                 required
              />
              <Mail className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-[42px] w-5 h-5 text-slate-400`} />
@@ -123,7 +130,7 @@ const Login: React.FC = () => {
           
           <div className="text-center space-y-2">
             <p className="text-xs text-slate-400 font-bold">
-              ملاحظة: تأكد من كتابة اسم المستخدم وليس الإيميل.
+              {t('login_note_username')}
             </p>
             <div className="h-px bg-slate-100 w-1/2 mx-auto"></div>
             <button 
@@ -131,7 +138,7 @@ const Login: React.FC = () => {
               onClick={() => { setUsername('admin'); setPassword('admin'); }}
               className="text-[10px] text-primary-500 font-black uppercase tracking-widest hover:underline"
             >
-              استخدام الحساب التجريبي (Admin/Admin)
+              {t('demo_account_btn')}
             </button>
           </div>
         </form>

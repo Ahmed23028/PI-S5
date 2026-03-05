@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Save, FileSpreadsheet, Upload, Printer, Download, Sparkles, Layers, Grid3X3, List, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { Result } from '../types';
+import { Result, getSubjectDisplayName } from '../types';
 import { useSchoolContext } from '../context/SchoolContext';
 import * as XLSX from 'xlsx';
 
@@ -10,7 +10,7 @@ interface ResultEntry {
 }
 
 const Results: React.FC = () => {
-  const { students, classes, subjects, results, saveResults, currentUser } = useSchoolContext();
+  const { students, classes, subjects, results, saveResults, currentUser, language } = useSchoolContext();
 
   const [activeTab, setActiveTab] = useState<'manual' | 'upload'>('manual');
   const [viewMode, setViewMode] = useState<'single' | 'grid'>('single');
@@ -301,10 +301,11 @@ const Results: React.FC = () => {
       }));
 
     saveResults(newResults);
-    const subjectName = subjects.find(s => String(s.id) === String(selectedSubjectId))?.name;
+    const subj = subjects.find(s => String(s.id) === String(selectedSubjectId));
+    const subjectName = subj ? getSubjectDisplayName(subj, language) : 'غير معروف';
     const message = currentUser?.role === 'admin' 
-      ? `تم حفظ نقاط مادة: ${subjectName || 'غير معروف'} (الفصل ${selectedSemester}) بنجاح.`
-      : `تم حفظ نقاط مادة: ${subjectName || 'غير معروف'} (الفصل ${selectedSemester}) بنجاح. النتائج الآن قيد المراجعة من قبل الإدارة.`;
+      ? `تم حفظ نقاط مادة: ${subjectName} (الفصل ${selectedSemester}) بنجاح.`
+      : `تم حفظ نقاط مادة: ${subjectName} (الفصل ${selectedSemester}) بنجاح. النتائج الآن قيد المراجعة من قبل الإدارة.`;
     alert(message);
   };
 
@@ -707,7 +708,7 @@ const Results: React.FC = () => {
              
              return `
                <tr>
-                 <td style="text-align: right; padding-right: 15px;">${subj.name}</td>
+                 <td style="text-align: right; padding-right: 15px;">${getSubjectDisplayName(subj, language)}</td>
                  <td>${subj.totalPoints}</td>
                  <td style="font-weight: bold;">${scoreDisplay}</td>
                  <td style="font-weight: bold;">${normalizedScore !== null ? normalizedScore.toFixed(2) : '-'}</td>
@@ -1058,7 +1059,7 @@ const Results: React.FC = () => {
                          <th className="px-4 py-4 text-gray-600 font-semibold min-w-[200px] sticky right-16 bg-gray-50 z-10 border-l shadow-sm">التلميذ</th>
                          {levelSubjects.length > 0 ? levelSubjects.map(subj => (
                             <th key={subj.id} className="px-2 py-4 text-gray-600 font-semibold text-center min-w-[100px]">
-                               {subj.name}
+                               {getSubjectDisplayName(subj, language)}
                                <div className="text-xs font-normal text-gray-400">({subj.totalPoints})</div>
                             </th>
                          )) : (
@@ -1145,7 +1146,7 @@ const Results: React.FC = () => {
                       value={selectedSubjectId}
                       onChange={(e) => setSelectedSubjectId(e.target.value)}
                     >
-                      {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      {subjects.map(s => <option key={s.id} value={s.id}>{getSubjectDisplayName(s, language)}</option>)}
                     </select>
                   </div>
                </div>

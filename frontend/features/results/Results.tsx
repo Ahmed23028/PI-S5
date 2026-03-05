@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { FileCheck, Save, Search, Info, ChevronDown, PlusCircle, Upload, Printer, FileSpreadsheet, Download, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { Result, Classroom } from '../../types';
+import { FileCheck, Save, Search, Info, ChevronDown, PlusCircle, Upload, Printer, FileSpreadsheet, Download, CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { Result, Classroom, getSubjectDisplayName } from '../../types';
 import { useSchoolContext } from '../../context/SchoolContext';
 import Input from '../../components/Input';
 import * as XLSX from 'xlsx';
@@ -12,12 +12,16 @@ interface ResultEntry {
 }
 
 const Results: React.FC = () => {
-  const { students, classes, subjects, results, saveResults, t, language, notify } = useSchoolContext();
+  const { students, classes, subjects, results, saveResults, fetchData, t, language, notify, currentUser } = useSchoolContext();
+  const isTeacher = currentUser?.role === 'teacher';
+  const isAdmin = currentUser?.role === 'admin';
+  // En fondamental : uniquement Examen. Admin et Enseignant ne voient pas le choix Test/Examen.
+  const examOnly = isTeacher || isAdmin;
 
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedSemester, setSelectedSemester] = useState<1 | 2 | 3>(1);
-  const [evaluationType, setEvaluationType] = useState<'test' | 'exam'>('test');
+  const [evaluationType, setEvaluationType] = useState<'test' | 'exam'>(examOnly ? 'exam' : 'test');
   const [searchTerm, setSearchTerm] = useState('');
   const [marks, setMarks] = useState<ResultEntry[]>([]);
   const isUserEditingRef = useRef(false); // Track if user is actively editing
@@ -39,11 +43,11 @@ const Results: React.FC = () => {
     return students.filter(s => s.classId === selectedClassId).sort((a, b) => a.fullName.localeCompare(b.fullName));
   }, [students, selectedClassId]);
 
-  // Create a Map for O(1) lookup of results
+  // Create a Map for O(1) lookup of results (toutes les notes: en attente, approuvées, refusées)
   const resultsMap = useMemo(() => {
     const map = new Map<string, Result>();
     results.forEach(result => {
-      const key = `${result.studentId}-${result.subjectId}-${result.semester}-${result.type}`;
+      const key = `${String(result.studentId)}-${String(result.subjectId)}-${result.semester}-${result.type}`;
       map.set(key, result);
     });
     return map;
@@ -68,6 +72,22 @@ const Results: React.FC = () => {
     });
     return map;
   }, [marks]);
+
+  // Enseignant et Admin : uniquement Examen (pas de choix Test/Examen en fondamental)
+  useEffect(() => {
+    if (examOnly) setEvaluationType('exam');
+  }, [examOnly]);
+
+  // Rafraîchir les données à l’ouverture de la page (pour afficher les notes approuvées par l’admin)
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleRefresh = useCallback(() => {
+    isUserEditingRef.current = false;
+    fetchData();
+    notify(t('data_refreshed') || 'تم تحديث البيانات', 'success');
+  }, [fetchData, notify, t]);
 
   // Initialize: Set first class when classes are loaded
   useEffect(() => {
@@ -122,7 +142,7 @@ const Results: React.FC = () => {
     }
 
     const newMarks: ResultEntry[] = classStudents.map(student => {
-      const key = `${student.id}-${selectedSubjectId}-${selectedSemester}-${evaluationType}`;
+      const key = `${String(student.id)}-${String(selectedSubjectId)}-${selectedSemester}-${evaluationType}`;
       const existingResult = resultsMap.get(key);
       const score = existingResult ? existingResult.score.toString() : '';
       console.log(`📋 Student ${student.id}:`, { key, existingResult: existingResult ? { score: existingResult.score } : null, finalScore: score });
@@ -253,14 +273,20 @@ const Results: React.FC = () => {
 
     const newResults: Result[] = marks
       .filter(m => m.score !== '' && m.score.trim() !== '')
-      .map(m => ({
-        studentId: m.studentId,
-        subjectId: selectedSubjectId,
-        score: parseFloat(m.score),
-        semester: selectedSemester,
-        type: evaluationType,
-        comment: m.comment || undefined
-      }));
+      .map(m => {
+        const key = `${String(m.studentId)}-${String(selectedSubjectId)}-${selectedSemester}-${evaluationType}`;
+        const existing = resultsMap.get(key);
+        const isAdmin = currentUser?.role === 'admin';
+        return {
+          studentId: m.studentId,
+          subjectId: selectedSubjectId,
+          score: parseFloat(m.score),
+          semester: selectedSemester,
+          type: evaluationType,
+          comment: m.comment || undefined,
+          status: (isAdmin && existing?.status === 'approved') ? 'approved' : (existing?.status || 'pending')
+        };
+      });
 
     if (newResults.length === 0) {
       notify(t('enter_one_score_min'), 'info');
@@ -273,7 +299,7 @@ const Results: React.FC = () => {
     } catch (error) {
       console.error('Error saving results:', error);
     }
-  }, [marks, selectedSubjectId, selectedSemester, evaluationType, saveResults, notify, t]);
+  }, [marks, selectedSubjectId, selectedSemester, evaluationType, saveResults, notify, t, resultsMap, currentUser]);
 
   const currentSubject = useMemo(() => {
     return subjects.find(s => s.id === selectedSubjectId) || null;
@@ -305,10 +331,10 @@ const Results: React.FC = () => {
       return;
     }
 
-    // Prepare Data
+    // Prepare Data (NNI au lieu de id)
     const data = studentsInClass.map(s => {
       const row: any = {
-        'رقم_التعريف': s.id,
+        'NNI': s.nni ?? '',
         'اسم_التلميذ': s.fullName,
       };
 
@@ -359,8 +385,8 @@ const Results: React.FC = () => {
     // Generate Worksheet
     const ws = XLSX.utils.json_to_sheet(data);
     
-    // Set column widths
-    const wscols = [{ wch: 15 }, { wch: 30 }];
+    // Set column widths (NNI: 10 chiffres, nom: 30)
+    const wscols = [{ wch: 12 }, { wch: 30 }];
     if (type === 'single') {
       wscols.push({ wch: 10 });
     } else {
@@ -399,19 +425,19 @@ const Results: React.FC = () => {
       const invalidStudents: string[] = []; // تلاميذ غير موجودين في القسم
 
       data.forEach(row => {
-        const studentId = row['رقم_التعريف']?.toString();
+        const nniVal = (row['NNI'] ?? row['رقم_التعريف'])?.toString()?.trim();
         const studentName = row['اسم_التلميذ']?.toString();
         
-        if (!studentId) return;
+        if (!nniVal) return;
 
-        // التحقق 1: التأكد من أن التلميذ موجود في القسم المحدد
-        const student = classStudents.find(s => String(s.id) === studentId);
+        // Trouver l'élève par NNI ou par id (rétrocompatibilité)
+        const student = classStudents.find(s => (s.nni && String(s.nni) === nniVal) || String(s.id) === nniVal);
         if (!student) {
-          // التلميذ غير موجود في القسم المحدد
           const name = studentName || 'غير معروف';
-          invalidStudents.push(`${name} (رقم: ${studentId})`);
-          return; // تجاهل هذا التلميذ
+          invalidStudents.push(`${name} (NNI: ${nniVal})`);
+          return;
         }
+        const studentId = student.id;
 
         // التحقق 2 (اختياري): التحقق من تطابق الاسم (تحذير فقط)
         if (studentName && student.fullName !== studentName) {
@@ -475,7 +501,7 @@ const Results: React.FC = () => {
     };
     reader.readAsBinaryString(file);
     e.target.value = ''; // Reset input
-  }, [selectedSubjectId, selectedSemester, evaluationType, levelSubjects, saveResults, notify]);
+  }, [selectedSubjectId, selectedSemester, evaluationType, levelSubjects, saveResults, notify, classStudents, subjects]);
 
   // Handle Print Reports
   const handlePrint = useCallback(() => {
@@ -617,7 +643,7 @@ const Results: React.FC = () => {
             
             return `
               <tr>
-                <td style="text-align: right; padding-right: 15px;">${subj.name}</td>
+                <td style="text-align: right; padding-right: 15px;">${getSubjectDisplayName(subj, language)}</td>
                 <td>${subj.totalPoints}</td>
                 <td style="font-weight: bold;">${scoreDisplay}</td>
                 <td style="font-weight: bold;">${normalizedScore !== null ? normalizedScore.toFixed(2) : '-'}</td>
@@ -719,6 +745,13 @@ const Results: React.FC = () => {
             {t('results_management')}
           </h2>
           <p className="text-slate-500 font-medium mt-1">رصد درجات التلاميذ حسب المواد المعتمدة للمستوى الدراسي</p>
+          {isAdmin && (
+            <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 mt-3 text-sm font-medium inline-flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {t('results_confirm_hint')}{' '}
+              <a href="#/approve-results" className="font-bold text-primary-600 hover:underline">{t('results_confirm_link')}</a>
+            </p>
+          )}
         </div>
         
         {/* Action Buttons - Top Right */}
@@ -749,26 +782,34 @@ const Results: React.FC = () => {
         </div>
         
         <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner w-full md:w-auto">
-          <button 
-            onClick={() => setEvaluationType('test')} 
-            className={`flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-black transition-all ${
-              evaluationType === 'test' 
-                ? 'bg-white text-primary-600 shadow-soft' 
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            {t('test')}
-          </button>
-          <button 
-            onClick={() => setEvaluationType('exam')} 
-            className={`flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-black transition-all ${
-              evaluationType === 'exam' 
-                ? 'bg-white text-orange-600 shadow-soft' 
-                : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            {t('exam')}
-          </button>
+          {examOnly ? (
+            <span className="px-8 py-3 rounded-xl text-sm font-black bg-white text-orange-600 shadow-soft">
+              {t('exam')}
+            </span>
+          ) : (
+            <>
+              <button 
+                onClick={() => setEvaluationType('test')} 
+                className={`flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-black transition-all ${
+                  evaluationType === 'test' 
+                    ? 'bg-white text-primary-600 shadow-soft' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {t('test')}
+              </button>
+              <button 
+                onClick={() => setEvaluationType('exam')} 
+                className={`flex-1 md:flex-none px-8 py-3 rounded-xl text-sm font-black transition-all ${
+                  evaluationType === 'exam' 
+                    ? 'bg-white text-orange-600 shadow-soft' 
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {t('exam')}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -844,7 +885,7 @@ const Results: React.FC = () => {
                     ) : (
                       levelSubjects.map(s => (
                         <option key={s.id} value={s.id}>
-                          {s.name} ({t('total_points')} {s.totalPoints})
+                          {getSubjectDisplayName(s, language)} ({t('total_points')} {s.totalPoints})
                         </option>
                       ))
                     )}
@@ -852,6 +893,15 @@ const Results: React.FC = () => {
                   <ChevronDown className="absolute left-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={handleRefresh}
+                className="flex items-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl font-bold text-slate-600 transition-all"
+                title={t('refresh_data') || 'Rafraîchir pour afficher les notes approuvées'}
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>{t('refresh_data') || 'Rafraîchir'}</span>
+              </button>
             </div>
 
             {/* Info Box */}
@@ -989,7 +1039,7 @@ const Results: React.FC = () => {
                           <td className="px-8 py-4 text-center">
                             {(() => {
                               // البحث عن حالة النتيجة
-                              const resultKey = `${student.id}-${selectedSubjectId}-${selectedSemester}-${evaluationType}`;
+                              const resultKey = `${String(student.id)}-${String(selectedSubjectId)}-${selectedSemester}-${evaluationType}`;
                               const existingResult = resultsMap.get(resultKey);
                               const resultStatus = existingResult?.status || (score !== '' ? 'pending' : null);
                               
@@ -1062,7 +1112,7 @@ const Results: React.FC = () => {
                 <div className="flex items-center gap-4 text-slate-400 text-sm font-bold">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-primary-500"></div>
-                    <span>{currentSubject?.name || '---'}</span>
+                    <span>{currentSubject ? getSubjectDisplayName(currentSubject, language) : '---'}</span>
                   </div>
                   <div className="w-1 h-1 rounded-full bg-slate-200"></div>
                   <span>عدد النقاط: {currentSubject?.totalPoints || '--'}</span>

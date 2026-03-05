@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, School, Award, Activity, ChevronRight, TrendingUp, Calendar, ArrowUpRight, GraduationCap } from 'lucide-react';
+import { Users, School, Award, Activity, ChevronRight, TrendingUp, Calendar, ArrowUpRight, GraduationCap, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useSchoolContext } from '../../context/SchoolContext';
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: any; color: string; trend: string }> = ({ title, value, icon: Icon, color, trend }) => (
@@ -41,7 +42,10 @@ const QuickLinkCard: React.FC<{ title: string; icon: any; color: string; onClick
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { students, classes, subjects, results, activities, t } = useSchoolContext();
+  const { students, classes, subjects, results, activities, t, currentUser } = useSchoolContext();
+  const isAdmin = currentUser?.role === 'admin';
+  const { i18n } = useTranslation();
+  const dateLocale = i18n.language === 'ar' ? 'ar-MA' : 'fr-FR';
 
   // حساب نسبة النجاح والمعدل العام
   const statistics = useMemo(() => {
@@ -124,14 +128,14 @@ const Dashboard: React.FC = () => {
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-black text-white mb-2">مرحباً بك مجدداً، يا مدير! 👋</h1>
-            <p className="text-primary-100 font-medium">إليك نظرة سريعة على أداء مدرستك اليوم.</p>
+            <h1 className="text-3xl font-black text-white mb-2">{t('welcome_back_manager')} 👋</h1>
+            <p className="text-primary-100 font-medium">{t('welcome_subtitle')}</p>
           </div>
           <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20">
             <Calendar className="w-6 h-6 text-white" />
             <div className="text-right">
-              <p className="text-[10px] text-primary-100 font-bold uppercase tracking-wider">تاريخ اليوم</p>
-              <p className="text-white font-bold">{new Date().toLocaleDateString('ar-MA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="text-[10px] text-primary-100 font-bold uppercase tracking-wider">{t('today_date')}</p>
+              <p className="text-white font-bold">{new Date().toLocaleDateString(dateLocale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>
         </div>
@@ -178,7 +182,7 @@ const Dashboard: React.FC = () => {
               <Activity className="w-6 h-6 text-primary-500" />
               {t('recent_activities')}
             </h3>
-            <button className="text-sm font-bold text-primary-600 hover:text-primary-700">عرض الكل</button>
+            <button className="text-sm font-bold text-primary-600 hover:text-primary-700">{t('show_all')}</button>
           </div>
 
           <div className="relative space-y-8">
@@ -201,7 +205,7 @@ const Dashboard: React.FC = () => {
                       <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-full uppercase">{formatTimeAgo(act.timestamp)}</span>
                     </div>
                     <p className="text-sm text-slate-500 leading-relaxed">
-                      تم تنفيذ هذا الإجراء بواسطة لوحة تحكم الإدارة لضمان تحديث بيانات المدرسة.
+                      {t('activity_desc')}
                     </p>
                   </div>
                 </div>
@@ -209,7 +213,7 @@ const Dashboard: React.FC = () => {
             ) : (
                <div className="text-center py-12">
                   <Activity className="w-12 h-12 text-slate-100 mx-auto mb-4" />
-                  <p className="text-slate-400 font-medium">لا توجد نشاطات مؤخراً</p>
+                  <p className="text-slate-400 font-medium">{t('no_activities_recent')}</p>
                </div>
             )}
           </div>
@@ -221,21 +225,31 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 gap-4">
              <QuickLinkCard 
                title={t('add_student_btn')}
-               desc="إضافة طالب جديد لقاعدة البيانات"
+               desc={t('quick_link_add_desc')}
                icon={Users}
                color="indigo"
                onClick={() => navigate('/students')}
              />
+             {isAdmin ? (
+             <QuickLinkCard 
+               title={t('approve_results')}
+               desc={t('quick_link_approve_desc')}
+               icon={CheckCircle2}
+               color="emerald"
+               onClick={() => navigate('/approve-results')}
+             />
+             ) : (
              <QuickLinkCard 
                title={t('enter_results_btn')}
-               desc="رصد درجات الفصل الدراسي"
+               desc={t('quick_link_results_desc')}
                icon={GraduationCap}
                color="emerald"
                onClick={() => navigate('/results')}
              />
+             )}
              <QuickLinkCard 
                title={t('print_reports_btn')}
-               desc="إعداد وطباعة كشوف النقاط"
+               desc={t('quick_link_print_desc')}
                icon={Award}
                color="amber"
                onClick={() => navigate('/results')}
@@ -244,10 +258,10 @@ const Dashboard: React.FC = () => {
 
           {/* Ad/Info Section */}
           <div className="mt-8 bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 rounded-[24px] text-white shadow-soft-xl shadow-indigo-200">
-             <h4 className="font-black text-lg mb-2">تحديثات النظام 🚀</h4>
-             <p className="text-indigo-100 text-sm mb-4 leading-relaxed">الآن يمكنك استخراج التقارير الإحصائية المتقدمة بضغطة زر واحدة من قسم الإحصائيات.</p>
+             <h4 className="font-black text-lg mb-2">{t('system_updates_title')} 🚀</h4>
+             <p className="text-indigo-100 text-sm mb-4 leading-relaxed">{t('system_updates_text')}</p>
              <button onClick={() => navigate('/statistics')} className="w-full py-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-xl font-bold text-sm transition-all">
-                استكشف الآن
+                {t('explore_now')}
              </button>
           </div>
         </div>

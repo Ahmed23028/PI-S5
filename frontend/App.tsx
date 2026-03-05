@@ -8,8 +8,8 @@ import Results from './features/results/Results';
 import Statistics from './features/statistics/Statistics';
 import Classes from './features/classes/Classes';
 import Subjects from './features/subjects/Subjects';
-import Users from './pages/Users';
 import ApproveResults from './pages/ApproveResults';
+import Assignments from './pages/Assignments';
 import Layout from './components/Layout';
 import { SchoolProvider, useSchoolContext } from './context/SchoolContext';
 import { useTranslation } from 'react-i18next';
@@ -97,7 +97,14 @@ function App() {
               } 
             />
             <Route path="/statistics" element={<Statistics />} />
-            <Route path="/users" element={<Users />} />
+            <Route 
+              path="/assignments" 
+              element={
+                <AdminRoute>
+                  <Assignments />
+                </AdminRoute>
+              } 
+            />
           </Route>
 
           <Route path="*" element={<Navigate to="/" />} />

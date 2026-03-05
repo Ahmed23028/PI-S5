@@ -181,7 +181,7 @@ const Statistics: React.FC = () => {
           value={stats.bestClass?.name || '-'} 
           icon={Trophy} 
           color="#f59e0b"
-          subtext={stats.bestClass ? t('class_avg', stats.bestClass.avg.toString()) : ''}
+          subtext={stats.bestClass ? t('class_avg', { avg: stats.bestClass.avg }) : ''}
         />
         <StatCard 
           title={t('struggling_students')}

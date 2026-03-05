@@ -10,6 +10,7 @@ class Classroom(models.Model):
 
 class Student(models.Model):
     fullName = models.CharField(max_length=255)
+    nni = models.CharField(max_length=20, blank=True, null=True, verbose_name='NNI')  # Numéro National d'Identification
     birthDate = models.DateField()
     gender = models.CharField(max_length=1, choices=[('M', 'ذكر'), ('F', 'أنثى')])
     parentPhone = models.CharField(max_length=20, blank=True)
@@ -17,9 +18,11 @@ class Student(models.Model):
     notes = models.TextField(blank=True, null=True)
     classId = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='students')
 
+
 class Subject(models.Model):
     name = models.CharField(max_length=100)
-    totalPoints = models.IntegerField(default=20)  # عدد النقاط الإجمالي للمادة (مثلاً: 50 للرياضيات، 30 للفرنسية)
+    name_ar = models.CharField(max_length=100, blank=True, null=True, verbose_name='الاسم بالعربية')
+    totalPoints = models.IntegerField(default=20)  # عدد النقاط الإجمالي للمادة
     level = models.IntegerField() # يربط بالمستوى (1-6) وليس بالقسم الفردي
 
 class Result(models.Model):
@@ -51,3 +54,17 @@ class Result(models.Model):
     
     def __str__(self):
         return f"{self.studentId.fullName} - {self.subjectId.name} - {self.score}"
+
+
+class TeacherAssignment(models.Model):
+    """Assignation enseignant : (utilisateur, classe, matière). Un enseignant peut avoir plusieurs classes et plusieurs matières."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teacher_assignments')
+    classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='teacher_assignments')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='teacher_assignments')
+
+    class Meta:
+        unique_together = ('user', 'classroom', 'subject')
+        verbose_name = 'Assignation enseignant'
+
+    def __str__(self):
+        return f"{self.user.username} - {self.classroom.name} - {self.subject.name}"

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Classroom, Student, Subject, Result
+from .models import Classroom, Student, Subject, Result, TeacherAssignment
 
 class ClassroomSerializer(serializers.ModelSerializer):
     student_count = serializers.SerializerMethodField()
@@ -69,6 +69,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 class ResultSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='studentId.fullName', read_only=True)
     subject_name = serializers.CharField(source='subjectId.name', read_only=True)
+    subject_name_ar = serializers.CharField(source='subjectId.name_ar', read_only=True, allow_null=True)
     submitted_by_name = serializers.CharField(source='submittedBy.username', read_only=True)
     approved_by_name = serializers.CharField(source='approvedBy.username', read_only=True, allow_null=True)
     
@@ -109,3 +110,23 @@ class ResultSerializer(serializers.ModelSerializer):
                 pass  # Subject validation will be handled elsewhere
         
         return data
+
+
+class TeacherAssignmentSerializer(serializers.ModelSerializer):
+    classroom_name = serializers.CharField(source='classroom.name', read_only=True)
+    classroom_level = serializers.IntegerField(source='classroom.level', read_only=True)
+    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    subject_name_ar = serializers.CharField(source='subject.name_ar', read_only=True, allow_null=True)
+    subject_total_points = serializers.IntegerField(source='subject.totalPoints', read_only=True)
+    user_username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = TeacherAssignment
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        for key in ('id', 'user', 'classroom', 'subject'):
+            if key in rep and rep[key] is not None:
+                rep[key] = str(rep[key])
+        return rep

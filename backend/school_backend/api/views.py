@@ -2,17 +2,42 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db import transaction
 from django.db.models import Avg, Count, Q, F
 from django.contrib.auth.models import User
 from django.utils import timezone
 from collections import defaultdict
 import logging
-from .models import Classroom, Student, Subject, Result
+from .models import Classroom, Student, Subject, Result, TeacherAssignment
 from .serializers import *
 
 logger = logging.getLogger(__name__)
+
+
+def _teacher_classroom_ids(request):
+    """IDs des classes assignées à l'enseignant connecté. None = pas de filtre (admin ou secrétaire)."""
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return None
+    ids = list(
+        TeacherAssignment.objects.filter(user=request.user)
+        .values_list('classroom_id', flat=True)
+        .distinct()
+    )
+    return ids if ids else None
+
+
+def _teacher_subject_ids(request):
+    """IDs des matières assignées à l'enseignant connecté. None = pas de filtre."""
+    if not request.user.is_authenticated or request.user.is_superuser:
+        return None
+    ids = list(
+        TeacherAssignment.objects.filter(user=request.user)
+        .values_list('subject_id', flat=True)
+        .distinct()
+    )
+    return ids if ids else None
+
 
 class ClassroomViewSet(viewsets.ModelViewSet):
     queryset = Classroom.objects.all().order_by('level', 'name')
@@ -20,6 +45,9 @@ class ClassroomViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Classroom.objects.all().order_by('level', 'name')
+        cids = _teacher_classroom_ids(self.request)
+        if cids is not None:
+            queryset = queryset.filter(id__in=cids)
         level = self.request.query_params.get('level', None)
         if level is not None:
             queryset = queryset.filter(level=level)
@@ -31,6 +59,9 @@ class StudentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Student.objects.all().order_by('fullName')
+        cids = _teacher_classroom_ids(self.request)
+        if cids is not None:
+            queryset = queryset.filter(classId_id__in=cids)
         class_id = self.request.query_params.get('classId', None)
         if class_id is not None:
             queryset = queryset.filter(classId_id=class_id)
@@ -55,6 +86,9 @@ class SubjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Subject.objects.all().order_by('level', 'name')
+        sids = _teacher_subject_ids(self.request)
+        if sids is not None:
+            queryset = queryset.filter(id__in=sids)
         level = self.request.query_params.get('level', None)
         if level is not None:
             queryset = queryset.filter(level=level)
@@ -66,11 +100,16 @@ class ResultViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Result.objects.all().order_by('-id')
+        cids = _teacher_classroom_ids(self.request)
+        sids = _teacher_subject_ids(self.request)
+        if cids is not None:
+            queryset = queryset.filter(studentId__classId_id__in=cids)
+        if sids is not None:
+            queryset = queryset.filter(subjectId_id__in=sids)
         student_id = self.request.query_params.get('studentId', None)
         subject_id = self.request.query_params.get('subjectId', None)
         semester = self.request.query_params.get('semester', None)
         result_status = self.request.query_params.get('status', None)
-        
         if student_id is not None:
             queryset = queryset.filter(studentId_id=student_id)
         if subject_id is not None:
@@ -199,12 +238,20 @@ class StatisticsView(APIView):
         except (ValueError, TypeError):
             semester = 1
         
-        # Get all data
+        # Get all data (filtered for teacher by assignments)
         students = Student.objects.select_related('classId').all()
         classes = Classroom.objects.all()
         subjects = Subject.objects.all()
-        # Filter results by semester and prefetch related objects for better performance
         results = Result.objects.filter(semester=semester).select_related('studentId', 'subjectId')
+        cids = _teacher_classroom_ids(request)
+        sids = _teacher_subject_ids(request)
+        if cids is not None:
+            students = students.filter(classId_id__in=cids)
+            classes = classes.filter(id__in=cids)
+            results = results.filter(studentId__classId_id__in=cids)
+        if sids is not None:
+            subjects = subjects.filter(id__in=sids)
+            results = results.filter(subjectId_id__in=sids)
         
         # Debug: Log total results count
         logger.info(f"Statistics calculation for semester {semester}: {results.count()} results found")
@@ -250,10 +297,12 @@ class StatisticsView(APIView):
                 elif test_res:
                     subj_score = test_res.score
                 
-                # Only add to calculation if we have a score (don't count subjects with no results)
-                if subj_score is not None:
-                    total_weighted_score += subj_score * subj.coefficient
-                    total_coefficients += subj.coefficient
+                # Normalize to /20 scale and add (each subject counts 1)
+                if subj_score is not None and getattr(subj, 'totalPoints', 20):
+                    pts = subj.totalPoints
+                    normalized = (subj_score / pts) * 20 if pts > 0 else 0
+                    total_weighted_score += normalized
+                    total_coefficients += 1
             
             # Calculate average only if we have at least one subject with results
             average = total_weighted_score / total_coefficients if total_coefficients > 0 else 0
@@ -360,26 +409,77 @@ class StatisticsView(APIView):
 
 class CurrentUserView(APIView):
     """
-    API endpoint to get current authenticated user information
+    API endpoint to get current authenticated user information.
+    For teachers, includes their assignments (classes + subjects).
     """
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         user = request.user
-        
-        # تحديد الدور بناءً على الصلاحيات
+        assignments_qs = TeacherAssignment.objects.filter(user=user).select_related('classroom', 'subject')
         if user.is_superuser:
             role = 'admin'
+        elif assignments_qs.exists():
+            role = 'teacher'
         elif user.is_staff:
             role = 'teacher'
         else:
             role = 'secretary'
-        
-        return Response({
+
+        payload = {
             'id': str(user.id),
             'username': user.username,
             'fullName': f"{user.first_name} {user.last_name}".strip() or user.username,
             'email': user.email or '',
             'role': role,
             'status': 'active' if user.is_active else 'inactive'
-        }, status=status.HTTP_200_OK)
+        }
+        if role == 'teacher':
+            assignments = assignments_qs
+            payload['assignments'] = [
+                {
+                    'id': str(a.id),
+                    'classroomId': str(a.classroom_id),
+                    'classroomName': a.classroom.name,
+                    'classroomLevel': a.classroom.level,
+                    'subjectId': str(a.subject_id),
+                    'subjectName': a.subject.name,
+                    'subjectNameAr': getattr(a.subject, 'name_ar', None) or '',
+                    'subjectTotalPoints': a.subject.totalPoints,
+                }
+                for a in assignments
+            ]
+        else:
+            payload['assignments'] = []
+        return Response(payload, status=status.HTTP_200_OK)
+
+
+class TeacherAssignmentViewSet(viewsets.ModelViewSet):
+    """CRUD assignations enseignant. Admin : tout. Enseignant : lecture de ses assignations."""
+    serializer_class = TeacherAssignmentSerializer
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return TeacherAssignment.objects.all().select_related('user', 'classroom', 'subject').order_by('user__username', 'classroom__level', 'subject__name')
+        return TeacherAssignment.objects.filter(user=self.request.user).select_related('classroom', 'subject').order_by('classroom__level', 'subject__name')
+
+    def get_permissions(self):
+        if self.action in ('create', 'destroy', 'update', 'partial_update'):
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
+
+
+class UserListView(APIView):
+    """Liste des utilisateurs (admin) pour le formulaire d'assignation."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        users = User.objects.filter(is_superuser=False).order_by('username')
+        return Response([
+            {
+                'id': str(u.id),
+                'username': u.username,
+                'fullName': f"{u.first_name} {u.last_name}".strip() or u.username,
+            }
+            for u in users
+        ], status=status.HTTP_200_OK)

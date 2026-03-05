@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { Result } from '../types';
 
 const ApproveResults: React.FC = () => {
-  const { fetchPendingResults, approveResult, rejectResult, currentUser, notify, t } = useSchoolContext();
+  const { fetchPendingResults, approveResult, rejectResult, currentUser, notify, t, language } = useSchoolContext();
   const [pendingResults, setPendingResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectReason, setRejectReason] = useState<{ [key: string]: string }>({});
@@ -132,7 +132,7 @@ const ApproveResults: React.FC = () => {
                       {result.student_name || 'غير معروف'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {result.subject_name || 'غير معروف'}
+                      {(language === 'ar' && result.subject_name_ar) ? result.subject_name_ar : (result.subject_name || 'غير معروف')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
                       {result.score.toFixed(2)}

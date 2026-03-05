@@ -14,12 +14,11 @@ import {
   ChevronRight,
   X,
   WifiOff,
-  UserCog,
+  UserPlus,
   CheckCircle2
 } from 'lucide-react';
 import { useSchoolContext } from '../context/SchoolContext';
 import { useTranslation } from 'react-i18next';
-import { getRoleName } from '../utils/permissions';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -69,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { to: '/results', label: 'results', icon: ClipboardList },
     ...(currentUser?.role === 'admin' ? [{ to: '/approve-results', label: 'approve_results', icon: CheckCircle2 }] : []),
     { to: '/statistics', label: 'statistics', icon: BarChart3 },
-    { to: '/users', label: 'staff_management', icon: UserCog },
+    ...(currentUser?.role === 'admin' ? [{ to: '/assignments', label: 'assignments_menu', icon: UserPlus }] : []),
   ];
 
   const getPageTitle = () => {
@@ -158,7 +157,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     {currentUser?.fullName || t('layout.admin_default_name')}
                   </p>
                   <p className="text-[10px] text-slate-400 font-bold">
-                    {currentUser?.role ? getRoleName(currentUser.role) : t('layout.admin_default_role')}
+                    {currentUser?.role ? t('role_' + currentUser.role) : t('layout.admin_default_role')}
                   </p>
                 </div>
               </div>
@@ -206,7 +205,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 text-slate-700 transition-all font-black"
              >
                <Globe className="w-4 h-4 text-primary-500" />
-               <span className="text-sm">{currentLang === 'ar' ? 'Français' : 'العربية'}</span>
+               <span className="text-sm">{currentLang === 'ar' ? t('lang_switch_fr') : t('lang_switch_ar')}</span>
              </button>
              
              <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
@@ -214,10 +213,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
              <div className="flex items-center gap-3 cursor-pointer p-1 pr-1 lg:pr-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100 group">
                <div className="hidden md:block text-left rtl:text-right">
                  <p className="text-sm font-black text-slate-800 group-hover:text-primary-600 transition-colors">
-                   {currentUser?.fullName || 'المستخدم'}
+                   {currentUser?.fullName || t('layout.user_fallback')}
                  </p>
                  <p className="text-[10px] text-primary-600 font-black uppercase tracking-tighter">
-                   {currentUser?.role ? getRoleName(currentUser.role) : 'المدير العام'}
+                   {currentUser?.role ? t('role_' + currentUser.role) : t('layout.admin_default_role')}
                  </p>
                </div>
                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-600 to-primary-400 p-0.5 shadow-md group-hover:shadow-primary-100 transition-all">

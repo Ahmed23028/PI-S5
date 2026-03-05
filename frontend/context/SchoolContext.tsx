@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Student, Classroom, Subject, Result, Activity, User } from '../types';
+import { Student, Classroom, Subject, Result, Activity, User, getSubjectDisplayName } from '../types';
 import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 
 interface Notification {
@@ -24,7 +24,7 @@ interface SchoolContextType {
   bulkAddStudents: (students: Omit<Student, 'id'>[]) => Promise<void>;
   updateStudent: (student: Student) => Promise<void>;
   deleteStudent: (id: string) => Promise<void>;
-  addClass: (classroom: Omit<Classroom, 'id' | 'studentCount'>) => Promise<void>;
+  addClass: (classroom: Omit<Classroom, 'id' | 'studentCount'>) => Promise<Classroom | void>;
   updateClass: (classroom: Classroom) => Promise<void>;
   deleteClass: (id: string) => Promise<void>;
   addSubject: (subject: Omit<Subject, 'id'>) => Promise<void>;
@@ -54,7 +54,7 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -176,7 +176,10 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       if (sRes.ok) setStudents(await sRes.json());
       if (cRes.ok) setClasses(await cRes.json());
       if (subRes.ok) setSubjects(await subRes.json());
-      if (rRes.ok) setResults(await rRes.json());
+      if (rRes.ok) {
+        const rData = await rRes.json();
+        setResults(Array.isArray(rData) ? rData : (rData.results || rData.data || []));
+      }
 
       setError(null);
     } catch (err) {
@@ -270,13 +273,15 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  const addClass = async (data: any) => {
+  const addClass = async (data: any): Promise<Classroom | void> => {
     try {
       const res = await apiRequest(`${API_BASE_URL}/classes/`, 'POST', data);
       if (res?.ok) { 
+        const created = await res.json() as Classroom;
         await fetchData(); 
         addActivity('add', t('act_class_added', data.name), [data.name]);
         notify(t('act_class_added', data.name)); 
+        return created;
       } else {
         const errorData = await res?.json().catch(() => ({}));
         notify(errorData.detail || t('error_occurred'), 'error');
@@ -368,7 +373,7 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       // إضافة status: 'pending' لكل نتيجة جديدة
       const resultsWithStatus = newResults.map(r => ({
         ...r,
-        status: r.status || 'pending'  // إذا لم يكن status محدد، استخدم 'pending'
+        status: r.status || 'pending'
       }));
       
       const res = await apiRequest(`${API_BASE_URL}/results/bulk_create/`, 'POST', resultsWithStatus);
@@ -484,7 +489,7 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const res = await apiRequest(`${API_BASE_URL}/subjects/${id}/`, 'DELETE');
       if (res?.ok) { 
         await fetchData(); 
-        addActivity('delete', t('delete_subject_confirm') + (subject ? `: ${subject.name}` : ''));
+        addActivity('delete', t('delete_subject_confirm') + (subject ? `: ${getSubjectDisplayName(subject, i18n.language)}` : ''));
         notify(t('delete_subject_confirm'), 'info'); 
       } else {
         const errorData = await res?.json().catch(() => ({}));

@@ -13,11 +13,12 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useSchoolContext } from '../../context/SchoolContext';
-import { Subject } from '../../types';
+import { Subject, getSubjectDisplayName } from '../../types';
 import Input from '../../components/Input';
 
 const Subjects: React.FC = () => {
-  const { subjects, addSubject, updateSubject, deleteSubject, t, language } = useSchoolContext();
+  const { subjects, addSubject, updateSubject, deleteSubject, t, language, currentUser } = useSchoolContext();
+  const isTeacher = currentUser?.role === 'teacher';
   
   // Navigation State: null means level selection, number means level (1-6)
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
@@ -128,13 +129,15 @@ const Subjects: React.FC = () => {
             <p className="text-slate-500 font-medium">إدارة المواد التي يدرسها جميع تلاميذ هذا المستوى</p>
           </div>
         </div>
-        <button 
-          onClick={handleOpenAddModal}
-          className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 group active:scale-95 font-black"
-        >
-          <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-          <span>إضافة مادة للمستوى</span>
-        </button>
+        {!isTeacher && (
+          <button 
+            onClick={handleOpenAddModal}
+            className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 group active:scale-95 font-black"
+          >
+            <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+            <span>إضافة مادة للمستوى</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -145,17 +148,19 @@ const Subjects: React.FC = () => {
                 <BookOpen className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-primary-600 transition-colors">{subject.name}</h4>
+                <h4 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-primary-600 transition-colors">{getSubjectDisplayName(subject, language)}</h4>
                 <div className="flex items-center gap-2 text-slate-400 text-xs font-bold bg-slate-50 px-3 py-1.5 rounded-xl w-fit border border-slate-100">
                   <Calculator className="w-3.5 h-3.5" />
                   <span>عدد النقاط: <span className="text-slate-700">{subject.totalPoints}</span></span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => handleOpenEditModal(subject)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition"><Edit className="w-5 h-5" /></button>
-              <button onClick={() => { if(window.confirm(t('delete_subject_confirm'))) deleteSubject(subject.id); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 className="w-5 h-5" /></button>
-            </div>
+            {!isTeacher && (
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => handleOpenEditModal(subject)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition"><Edit className="w-5 h-5" /></button>
+                <button onClick={() => { if(window.confirm(t('delete_subject_confirm'))) deleteSubject(subject.id); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 className="w-5 h-5" /></button>
+              </div>
+            )}
           </div>
         )) : (
           <div className="col-span-full py-20 text-center bg-white rounded-[32px] border border-dashed border-slate-200">
@@ -164,13 +169,15 @@ const Subjects: React.FC = () => {
           </div>
         )}
 
-        <button 
-          onClick={handleOpenAddModal}
-          className="border-2 border-dashed border-slate-200 rounded-[24px] p-6 flex flex-col items-center justify-center text-slate-400 hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50/30 transition-all min-h-[140px] group"
-        >
-          <Plus className="w-8 h-8 mb-2 group-hover:scale-125 transition-transform" />
-          <span className="text-sm font-black tracking-wide">أضف مادة جديدة</span>
-        </button>
+        {!isTeacher && (
+          <button 
+            onClick={handleOpenAddModal}
+            className="border-2 border-dashed border-slate-200 rounded-[24px] p-6 flex flex-col items-center justify-center text-slate-400 hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50/30 transition-all min-h-[140px] group"
+          >
+            <Plus className="w-8 h-8 mb-2 group-hover:scale-125 transition-transform" />
+            <span className="text-sm font-black tracking-wide">أضف مادة جديدة</span>
+          </button>
+        )}
       </div>
 
       {showModal && (

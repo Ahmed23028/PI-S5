@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Plus, Search, FileDown, Edit, Trash2, FileText, X } from 'lucide-react';
-import { Student } from '../types';
+import { Student, getSubjectDisplayName } from '../types';
 import Input from '../components/Input';
 import { useSchoolContext } from '../context/SchoolContext';
 import { useTranslation } from 'react-i18next';
 
 const Students: React.FC = () => {
-  const { students, classes, subjects, results, addStudent, updateStudent, deleteStudent } = useSchoolContext();
+  const { students, classes, subjects, results, addStudent, updateStudent, deleteStudent, language } = useSchoolContext();
   const { t } = useTranslation();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -396,7 +396,7 @@ const Students: React.FC = () => {
                          const total = subjScore !== null ? subjScore * subject.coefficient : 0;
                          return (
                            <tr key={subject.id}>
-                             <td className="py-3 font-medium text-gray-800">{subject.name}</td>
+                             <td className="py-3 font-medium text-gray-800">{getSubjectDisplayName(subject, language)}</td>
                              <td className="py-3 text-gray-500">{subject.coefficient}</td>
                              <td className="py-3">
                                <span className={`${subjScore !== null && subjScore < 10 ? 'text-red-500' : 'text-gray-800'}`}>

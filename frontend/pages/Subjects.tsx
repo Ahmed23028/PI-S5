@@ -15,7 +15,7 @@ import {
   PlusCircle
 } from 'lucide-react';
 import { useSchoolContext } from '../context/SchoolContext';
-import { Subject, Classroom } from '../types';
+import { Subject, Classroom, getSubjectDisplayName } from '../types';
 import Input from '../components/Input';
 
 const Subjects: React.FC = () => {
@@ -178,7 +178,7 @@ const Subjects: React.FC = () => {
                 <BookOpen className="w-6 h-6" />
               </div>
               <div>
-                <h4 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-primary-600 transition-colors">{subject.name}</h4>
+                <h4 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-primary-600 transition-colors">{getSubjectDisplayName(subject, language)}</h4>
                 <div className="flex items-center gap-2 text-slate-400 text-xs font-bold bg-slate-50 px-3 py-1.5 rounded-xl w-fit border border-slate-100">
                   <Calculator className="w-3.5 h-3.5" />
                   <span>عدد النقاط: <span className="text-slate-700">{subject.totalPoints}</span></span>

@@ -88,6 +88,30 @@ class Command(BaseCommand):
             teacher2_user.save()
             self.stdout.write(self.style.SUCCESS(f'✅ تم إنشاء مستخدم المعلم 2: {teacher2_username}'))
         
+        # 4. Create teacher 3
+        teacher3_username = 'teacher3'
+        teacher3_password = 'teacher123'
+        
+        if User.objects.filter(username=teacher3_username).exists():
+            teacher3_user = User.objects.get(username=teacher3_username)
+            teacher3_user.set_password(teacher3_password)
+            teacher3_user.is_staff = False
+            teacher3_user.is_superuser = False
+            teacher3_user.save()
+            self.stdout.write(self.style.SUCCESS(f'✅ تم تحديث مستخدم المعلم 3: {teacher3_username}'))
+        else:
+            teacher3_user = User.objects.create_user(
+                username=teacher3_username,
+                email='teacher3@school.com',
+                password=teacher3_password,
+                first_name='معلم',
+                last_name='ثالث'
+            )
+            teacher3_user.is_staff = False
+            teacher3_user.is_superuser = False
+            teacher3_user.save()
+            self.stdout.write(self.style.SUCCESS(f'✅ تم إنشاء مستخدم المعلم 3: {teacher3_username}'))
+        
         self.stdout.write(self.style.SUCCESS('\n' + '='*50))
         self.stdout.write(self.style.SUCCESS('📋 معلومات المستخدمين:'))
         self.stdout.write(self.style.SUCCESS('='*50))
@@ -104,6 +128,11 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'\n👨‍🏫 المعلم 2:'))
         self.stdout.write(self.style.SUCCESS(f'   Username: {teacher2_username}'))
         self.stdout.write(self.style.SUCCESS(f'   Password: {teacher2_password}'))
+        self.stdout.write(self.style.SUCCESS(f'   Role: teacher (is_staff=False)'))
+        
+        self.stdout.write(self.style.SUCCESS(f'\n👨‍🏫 المعلم 3:'))
+        self.stdout.write(self.style.SUCCESS(f'   Username: {teacher3_username}'))
+        self.stdout.write(self.style.SUCCESS(f'   Password: {teacher3_password}'))
         self.stdout.write(self.style.SUCCESS(f'   Role: teacher (is_staff=False)'))
         
         self.stdout.write(self.style.SUCCESS('\n' + '='*50))

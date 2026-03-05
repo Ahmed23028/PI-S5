@@ -5,7 +5,8 @@ import { Classroom } from '../../types';
 import Input from '../../components/Input';
 
 const Classes: React.FC = () => {
-  const { classes, students, addClass, updateClass, deleteClass, t, language } = useSchoolContext();
+  const { classes, students, addClass, updateClass, deleteClass, t, language, currentUser } = useSchoolContext();
+  const isTeacher = currentUser?.role === 'teacher';
   
   // Modal States
   const [showModal, setShowModal] = useState(false);
@@ -105,13 +106,15 @@ const Classes: React.FC = () => {
            </h2>
            <p className="text-gray-500 mt-1">{t('structure_desc')}</p>
         </div>
-        <button 
-          onClick={() => openAddModal()}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition shadow-lg"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="font-bold">{t('add_class_general')}</span>
-        </button>
+        {!isTeacher && (
+          <button 
+            onClick={() => openAddModal()}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="font-bold">{t('add_class_general')}</span>
+          </button>
+        )}
       </div>
 
       <div className="space-y-8">
@@ -136,13 +139,15 @@ const Classes: React.FC = () => {
                    </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); openAddModal(level); }}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-primary rounded-lg text-sm font-bold hover:bg-blue-50 transition"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t('add_group')}
-                  </button>
+                  {!isTeacher && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); openAddModal(level); }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-primary rounded-lg text-sm font-bold hover:bg-blue-50 transition"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t('add_group')}
+                    </button>
+                  )}
                   {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
                 </div>
               </div>
@@ -163,10 +168,12 @@ const Classes: React.FC = () => {
                                 >
                                   {cls.name}
                                 </h4>
-                                <div className="flex gap-1">
-                                  <button onClick={() => openEditModal(cls)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"><Edit className="w-4 h-4" /></button>
-                                  <button onClick={() => handleDelete(cls.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
-                                </div>
+                                {!isTeacher && (
+                                  <div className="flex gap-1">
+                                    <button onClick={() => openEditModal(cls)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"><Edit className="w-4 h-4" /></button>
+                                    <button onClick={() => handleDelete(cls.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
+                                  </div>
+                                )}
                              </div>
                              
                              <div 
@@ -188,25 +195,29 @@ const Classes: React.FC = () => {
                         );
                       })}
                       
-                      {/* Quick Add Button inside grid */}
-                      <button 
-                        onClick={() => openAddModal(level)}
-                        className="border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-gray-400 hover:border-primary hover:text-primary hover:bg-blue-50 transition min-h-[100px]"
-                      >
-                        <Plus className="w-6 h-6 mb-1" />
-                        <span className="text-sm font-medium">{t('new_group')}</span>
-                      </button>
+                      {/* Quick Add Button inside grid (admin only) */}
+                      {!isTeacher && (
+                        <button 
+                          onClick={() => openAddModal(level)}
+                          className="border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-gray-400 hover:border-primary hover:text-primary hover:bg-blue-50 transition min-h-[100px]"
+                        >
+                          <Plus className="w-6 h-6 mb-1" />
+                          <span className="text-sm font-medium">{t('new_group')}</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-400 flex flex-col items-center">
                       <School className="w-12 h-12 mb-2 opacity-20" />
                       <p className="mb-4">{t('no_classes_level')}</p>
-                      <button 
-                        onClick={() => openAddModal(level)}
-                        className="text-primary font-bold hover:underline"
-                      >
-                        {t('add_first_class', level.toString())}
-                      </button>
+                      {!isTeacher && (
+                        <button 
+                          onClick={() => openAddModal(level)}
+                          className="text-primary font-bold hover:underline"
+                        >
+                          {t('add_first_class', level.toString())}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

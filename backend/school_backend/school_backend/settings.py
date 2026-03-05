@@ -12,15 +12,18 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-env_path = BASE_DIR.parent / '.env'
-if env_path.exists():
-    load_dotenv(env_path, override=True)
+# Load environment variables from .env file (optional: requires python-dotenv)
+try:
+    from dotenv import load_dotenv
+    env_path = BASE_DIR.parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path, override=True)
+except ImportError:
+    pass  # python-dotenv non installé : utiliser les valeurs par défaut ou les variables d'environnement système
 
 
 # Quick-start development settings - unsuitable for production

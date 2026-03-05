@@ -1,10 +1,10 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  PieChart, Pie, Cell, AreaChart, Area 
+  PieChart, Pie, Cell, AreaChart, Area, LineChart, Line
 } from 'recharts';
-import { Trophy, TrendingUp, Users, AlertCircle, Calculator, BookOpen, GraduationCap } from 'lucide-react';
+import { TrophyIcon, ArrowTrendingUpIcon, UsersIcon, ExclamationTriangleIcon, CalculatorIcon, BookOpenIcon, AcademicCapIcon, SparklesIcon, ChartBarIcon } from '@heroicons/react/24/solid';
 import { useSchoolContext } from '../../context/SchoolContext';
 
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
@@ -43,7 +43,12 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: any; col
 );
 
 const Statistics: React.FC = () => {
-  const { students, classes, subjects, results, t } = useSchoolContext();
+  const { students, classes, subjects, results, t, language } = useSchoolContext();
+  
+  // Filter states
+  const [selectedSemester, setSelectedSemester] = useState<1 | 2 | 3>(1);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     // حساب معدل كل تلميذ بدقة بناءً على المواد المعتمدة لمستواه (Level Curriculum)
@@ -51,11 +56,21 @@ const Statistics: React.FC = () => {
       const currentClass = classes.find(c => c.id === student.classId);
       if (!currentClass) return { ...student, average: 0 };
 
+      // Filtre par niveau si sélectionné
+      if (selectedLevel !== null && currentClass.level !== selectedLevel) {
+        return { ...student, average: 0, classId: student.classId, excluded: true };
+      }
+
+      // Filtre par classe si sélectionnée
+      if (selectedClass !== null && student.classId !== selectedClass) {
+        return { ...student, average: 0, classId: student.classId, excluded: true };
+      }
+
       // نجلب مواد المستوى الدراسي لهذا التلميذ
       const levelSubjects = subjects.filter(s => s.level === currentClass.level);
       
-      // نجلب النتائج المسجلة له (الفصل الأول افتراضياً للإحصائيات العامة)
-      const semesterResults = results.filter(r => r.studentId === student.id && r.semester === 1);
+      // نجلب النتائج المسجلة له (باستخدام الفصل المختار)
+      const semesterResults = results.filter(r => r.studentId === student.id && r.semester === selectedSemester);
 
       let normalizedScores: number[] = [];
       let totalScore = 0;
@@ -86,12 +101,12 @@ const Statistics: React.FC = () => {
       };
     });
 
-    const totalStudents = studentAverages.length;
-    const passedStudents = studentAverages.filter(s => s.average >= 10).length;
+    const totalStudents = studentAverages.filter(s => !s.excluded).length;
+    const passedStudents = studentAverages.filter(s => !s.excluded && s.average >= 10).length;
     const failedStudents = totalStudents - passedStudents;
     const passRate = totalStudents > 0 ? ((passedStudents / totalStudents) * 100).toFixed(1) : 0;
     const globalAverage = totalStudents > 0 
-      ? (studentAverages.reduce((acc, curr) => acc + curr.average, 0) / totalStudents).toFixed(2) 
+      ? (studentAverages.filter(s => !s.excluded).reduce((acc, curr) => acc + curr.average, 0) / totalStudents).toFixed(2) 
       : "0.00";
 
     const classPerformance = classes.map(cls => {
@@ -107,11 +122,17 @@ const Statistics: React.FC = () => {
       };
     }).sort((a, b) => b.avg - a.avg);
 
-    // أداء المواد (تجميع المواد المتشابهة في مستويات مختلفة)
+    // أداء المواد
     const subjectNames = Array.from(new Set(subjects.map(s => s.name)));
     const subjectPerformance = subjectNames.map(name => {
       const relevantSubjectIds = subjects.filter(s => s.name === name).map(s => s.id);
-      const relevantResults = results.filter(r => relevantSubjectIds.includes(r.subjectId) && r.semester === 1);
+      let relevantResults = results.filter(r => relevantSubjectIds.includes(r.subjectId) && r.semester === selectedSemester);
+      
+      // Filtre par niveau ou classe si sélectionné
+      if (selectedLevel !== null || selectedClass !== null) {
+        const relevantStudentIds = new Set(studentAverages.filter(s => !s.excluded).map(s => s.id));
+        relevantResults = relevantResults.filter(r => relevantStudentIds.has(r.studentId));
+      }
       
       const avg = relevantResults.length > 0
         ? relevantResults.reduce((acc, r) => acc + r.score, 0) / relevantResults.length
@@ -134,30 +155,63 @@ const Statistics: React.FC = () => {
       passFailData: [
         { name: t('passed'), value: passedStudents },
         { name: t('failed'), value: failedStudents }
-      ]
+      ],
+      studentRankings: studentAverages
+        .filter(s => !s.excluded)
+        .sort((a, b) => b.average - a.average)
+        .slice(0, 10)
+        .map((s, idx) => ({
+          rank: idx + 1,
+          name: s.fullName,
+          average: parseFloat(s.average.toFixed(2))
+        }))
     };
-  }, [students, classes, subjects, results, t]);
+  }, [students, classes, subjects, results, t, selectedSemester, selectedLevel, selectedClass]);
 
   return (
     <div className="space-y-10 pb-20 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-black text-slate-800 flex items-center gap-3">
-            <div className="p-2 bg-primary-600 text-white rounded-2xl shadow-lg shadow-primary-100">
-               <TrendingUp className="w-8 h-8" />
+               <div className="p-2 bg-primary-600 text-white rounded-2xl shadow-lg shadow-primary-100">
+               <ArrowTrendingUpIcon className="w-8 h-8" />
             </div>
             {t('general_stats')}
           </h2>
-          <p className="text-slate-500 font-medium mt-1">تقارير تحليلية شاملة للأداء الأكاديمي لمدرستك (الفصل الدراسي الحالي)</p>
+          <p className="text-slate-500 font-medium mt-1">تقارير تحليلية شاملة للأداء الأكاديمي لمدرستك</p>
         </div>
-        <div className="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-soft flex items-center gap-4">
-           <div className="flex -space-x-2 rtl:space-x-reverse">
-              {students.slice(0, 3).map((s, i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-500">{s.fullName.charAt(0)}</div>
-              ))}
-              <div className="w-8 h-8 rounded-full border-2 border-white bg-primary-500 flex items-center justify-center text-[10px] font-black text-white">+{students.length}</div>
-           </div>
-           <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{t('student_count')}</span>
+        <div className="flex gap-3 flex-wrap">
+          <select 
+            value={selectedSemester}
+            onChange={(e) => setSelectedSemester(parseInt(e.target.value) as 1 | 2 | 3)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 font-bold text-slate-700"
+          >
+            <option value={1}>{t('semester')} 1</option>
+            <option value={2}>{t('semester')} 2</option>
+            <option value={3}>{t('semester')} 3</option>
+          </select>
+          
+          <select 
+            value={selectedLevel ?? ''}
+            onChange={(e) => setSelectedLevel(e.target.value ? parseInt(e.target.value) : null)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 font-bold text-slate-700"
+          >
+            <option value="">{t('all_levels')}</option>
+            {[1, 2, 3, 4, 5, 6].map(level => (
+              <option key={level} value={level}>{t(`level_${level}`)}</option>
+            ))}
+          </select>
+
+          <select 
+            value={selectedClass ?? ''}
+            onChange={(e) => setSelectedClass(e.target.value || null)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 font-bold text-slate-700"
+          >
+            <option value="">{t('all_classes')}</option>
+            {classes.map(cls => (
+              <option key={cls.id} value={cls.id}>{cls.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -165,28 +219,28 @@ const Statistics: React.FC = () => {
         <StatCard 
           title={t('general_average')}
           value={`${stats.globalAverage} / 20`} 
-          icon={Calculator} 
+          icon={CalculatorIcon} 
           color="#0ea5e9"
           subtext={t('avg_students_desc')}
         />
         <StatCard 
           title={t('success_rate')}
           value={`${stats.passRate}%`} 
-          icon={GraduationCap} 
+          icon={AcademicCapIcon} 
           color="#10b981"
           subtext={`${stats.passFailData[0].value} ${t('passed')}`}
         />
         <StatCard 
           title={t('best_class')}
           value={stats.bestClass?.name || '-'} 
-          icon={Trophy} 
+          icon={TrophyIcon} 
           color="#f59e0b"
           subtext={stats.bestClass ? t('class_avg', stats.bestClass.avg.toString()) : ''}
         />
         <StatCard 
           title={t('struggling_students')}
           value={stats.failedStudents} 
-          icon={AlertCircle} 
+          icon={ExclamationTriangleIcon} 
           color="#ef4444"
           subtext={t('struggling_desc')}
         />
@@ -244,7 +298,7 @@ const Statistics: React.FC = () => {
       <div className="bg-white p-10 rounded-[40px] shadow-soft border border-slate-100">
         <div className="flex items-center gap-4 mb-10">
           <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
-            <BookOpen className="w-6 h-6" />
+            <BookOpenIcon className="w-6 h-6" />
           </div>
           <div>
             <h3 className="text-xl font-black text-slate-800">{t('performance_by_subject')}</h3>
@@ -267,6 +321,62 @@ const Statistics: React.FC = () => {
               <Area type="monotone" dataKey="avg" name={t('avg_score')} stroke="#8b5cf6" strokeWidth={4} fillOpacity={1} fill="url(#colorAvg)" />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Top 10 Students Ranking */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white p-10 rounded-[40px] shadow-soft border border-slate-100">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="p-3 bg-yellow-50 rounded-2xl text-yellow-600">
+              <TrophyIcon className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-black text-slate-800">{t('top_students')}</h3>
+          </div>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {stats.studentRankings.map((student) => (
+              <div key={student.rank} className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-100 hover:border-primary-200 transition group">
+                <div className="flex items-center gap-4">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm text-white ${
+                    student.rank === 1 ? 'bg-yellow-500' : student.rank === 2 ? 'bg-gray-400' : student.rank === 3 ? 'bg-orange-500' : 'bg-slate-400'
+                  }`}>
+                    {student.rank}
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800">{student.name}</p>
+                    <p className="text-xs text-slate-400">Rang #{student.rank}</p>
+                  </div>
+                </div>
+                <span className="font-black text-lg text-primary-600">{student.average}/20</span>
+              </div>
+            ))}
+            {stats.studentRankings.length === 0 && (
+              <div className="text-center py-8 text-slate-400">
+                <p>{t('no_data')}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Trend Line Chart */}
+        <div className="bg-white p-10 rounded-[40px] shadow-soft border border-slate-100">
+          <div className="flex items-center gap-4 mb-10">
+            <div className="p-3 bg-blue-50 rounded-2xl text-blue-600">
+              <SparklesIcon className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-black text-slate-800">محاكاة التطور</h3>
+          </div>
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={stats.subjectPerformance} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }} dy={15} />
+                <YAxis domain={[0, 20]} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 700 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Line type="monotone" dataKey="avg" stroke="#06b6d4" strokeWidth={3} dot={{ fill: '#06b6d4', r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

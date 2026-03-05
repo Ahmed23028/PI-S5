@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserCog, Plus, Shield, Mail, CheckCircle, XCircle, Trash2, Edit, X } from 'lucide-react';
+import { UserCircleIcon, PlusIcon, ShieldCheckIcon, EnvelopeIcon, CheckCircleIcon, XCircleIcon, TrashIcon, PencilIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { useSchoolContext } from '../context/SchoolContext';
 import { User } from '../types';
 import Input from '../components/Input';
@@ -50,7 +50,7 @@ const Users: React.FC = () => {
         <div>
           <h2 className="text-3xl font-black text-slate-800 flex items-center gap-3">
              <div className="p-2 bg-indigo-600 text-white rounded-2xl shadow-lg">
-               <UserCog className="w-8 h-8" />
+               <UserCircleIcon className="w-8 h-8" />
              </div>
              {t('staff_title')}
           </h2>
@@ -60,7 +60,7 @@ const Users: React.FC = () => {
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all active:scale-95"
         >
-          <Plus className="w-5 h-5" />
+          <PlusIcon className="w-5 h-5" />
           <span>{t('add_user')}</span>
         </button>
       </div>
@@ -78,7 +78,7 @@ const Users: React.FC = () => {
                    <div className="flex flex-col items-end gap-2">
                       {getRoleBadge(user.role)}
                       <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">
-                        <CheckCircle className="w-3 h-3" />
+                        <CheckCircleIcon className="w-3 h-3" />
                         {t('active')}
                       </div>
                    </div>
@@ -91,21 +91,21 @@ const Users: React.FC = () => {
                    </div>
                    
                    <div className="flex items-center gap-3 text-slate-500">
-                      <Mail className="w-4 h-4" />
+                      <EnvelopeIcon className="w-4 h-4" />
                       <span className="text-xs font-medium">{user.email || 'لا يوجد بريد'}</span>
                    </div>
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center">
                    <div className="flex gap-2">
-                      <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"><Edit className="w-5 h-5" /></button>
+                      <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"><PencilIcon className="w-5 h-5" /></button>
                       <button 
                         onClick={() => setUsers(users.filter(u => u.id !== user.id))}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                      ><Trash2 className="w-5 h-5" /></button>
+                      ><TrashIcon className="w-5 h-5" /></button>
                    </div>
                    <div className="p-2 bg-slate-50 rounded-xl text-slate-300">
-                      <Shield className="w-5 h-5" />
+                      <ShieldCheckIcon className="w-5 h-5" />
                    </div>
                 </div>
              </div>
@@ -122,7 +122,7 @@ const Users: React.FC = () => {
                    <h3 className="text-2xl font-black text-slate-800">{t('add_user')}</h3>
                    <p className="text-xs text-slate-400 font-bold uppercase mt-1 tracking-widest">صلاحيات النظام</p>
                 </div>
-                <button onClick={() => setShowModal(false)} className="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"><X className="w-7 h-7" /></button>
+                <button onClick={() => setShowModal(false)} className="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"><XMarkIcon className="w-7 h-7" /></button>
               </div>
               <div className="p-10 space-y-6">
                  <Input 

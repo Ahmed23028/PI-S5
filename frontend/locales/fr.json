@@ -181,6 +181,9 @@
   "time_min_ago": "Il y a 1 min",
   "time_mins_ago": "Il y a {{0}} mins",
   "time_hour_ago": "Il y a 1 heure",
-  "time_hours_ago": "Il y a {{0}} heures"
+  "time_hours_ago": "Il y a {{0}} heures",
+  "enter_score_first": "Veuillez saisir une note d'abord",
+  "result_saved_successfully": "Note enregistrée avec succès",
+  "error_saving_result": "Erreur lors de l'enregistrement de la note"
 }
 

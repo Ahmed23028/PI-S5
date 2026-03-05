@@ -1,17 +1,17 @@
 
 import React, { useState } from 'react';
 import { 
-  Plus, 
-  BookOpen, 
-  Calculator, 
-  Edit, 
-  Trash2, 
-  LibraryBig, 
-  ChevronLeft, 
-  X,
-  PlusCircle,
-  GraduationCap
-} from 'lucide-react';
+  PlusIcon, 
+  BookOpenIcon, 
+  CalculatorIcon, 
+  PencilIcon, 
+  TrashIcon, 
+  BuildingLibraryIcon, 
+  ChevronLeftIcon, 
+  XMarkIcon,
+  PlusCircleIcon,
+  AcademicCapIcon
+} from '@heroicons/react/24/solid';
 import { useSchoolContext } from '../../context/SchoolContext';
 import { Subject } from '../../types';
 import Input from '../../components/Input';
@@ -29,6 +29,10 @@ const Subjects: React.FC = () => {
     name: '',
     totalPoints: 20
   });
+  
+  // Delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const levels = [1, 2, 3, 4, 5, 6];
 
@@ -47,6 +51,14 @@ const Subjects: React.FC = () => {
     setFormData(subject);
     setEditingId(subject.id);
     setShowModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteTarget) {
+      await deleteSubject(deleteTarget);
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -75,7 +87,7 @@ const Subjects: React.FC = () => {
         <div className="flex flex-col">
           <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
             <div className="p-2 bg-primary-600 rounded-xl text-white shadow-lg">
-              <LibraryBig className="w-6 h-6" />
+              <BuildingLibraryIcon className="w-6 h-6" />
             </div>
             {t('subjects_management')}
           </h2>
@@ -91,7 +103,7 @@ const Subjects: React.FC = () => {
             >
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 rounded-2xl bg-primary-50 text-primary-600 group-hover:bg-primary-600 group-hover:text-white transition-colors flex items-center justify-center">
-                  <GraduationCap className="w-8 h-8" />
+                  <AcademicCapIcon className="w-8 h-8" />
                 </div>
                 <div>
                   <h3 className="font-black text-xl text-slate-800">{getLevelName(lvl)}</h3>
@@ -100,7 +112,7 @@ const Subjects: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <ChevronLeft className={`w-6 h-6 text-slate-300 group-hover:text-primary-500 transition-transform ${language === 'ar' ? '' : 'rotate-180'}`} />
+              <ChevronLeftIcon className={`w-6 h-6 text-slate-300 group-hover:text-primary-500 transition-transform ${language === 'ar' ? '' : 'rotate-180'}`} />
             </button>
           ))}
         </div>
@@ -116,7 +128,7 @@ const Subjects: React.FC = () => {
             onClick={() => setSelectedLevel(null)}
             className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-primary-600 hover:border-primary-200 transition-all shadow-sm active:scale-95"
           >
-            <ChevronLeft className={`w-5 h-5 ${language === 'ar' ? 'rotate-180' : ''}`} />
+            <ChevronLeftIcon className={`w-5 h-5 ${language === 'ar' ? 'rotate-180' : ''}`} />
           </button>
           <div>
             <div className="flex items-center gap-2">
@@ -132,7 +144,7 @@ const Subjects: React.FC = () => {
           onClick={handleOpenAddModal}
           className="flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 group active:scale-95 font-black"
         >
-          <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+          <PlusCircleIcon className="w-5 h-5 group-hover:rotate-90 transition-transform" />
           <span>إضافة مادة للمستوى</span>
         </button>
       </div>
@@ -142,24 +154,24 @@ const Subjects: React.FC = () => {
           <div key={subject.id} className="bg-white rounded-[24px] shadow-soft border border-slate-100 p-6 flex items-start justify-between hover:shadow-soft-xl hover:-translate-y-1 transition-all group">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                <BookOpen className="w-6 h-6" />
+                <BookOpenIcon className="w-6 h-6" />
               </div>
               <div>
                 <h4 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-primary-600 transition-colors">{subject.name}</h4>
                 <div className="flex items-center gap-2 text-slate-400 text-xs font-bold bg-slate-50 px-3 py-1.5 rounded-xl w-fit border border-slate-100">
-                  <Calculator className="w-3.5 h-3.5" />
+                  <CalculatorIcon className="w-3.5 h-3.5" />
                   <span>عدد النقاط: <span className="text-slate-700">{subject.totalPoints}</span></span>
                 </div>
               </div>
             </div>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => handleOpenEditModal(subject)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition"><Edit className="w-5 h-5" /></button>
-              <button onClick={() => { if(window.confirm(t('delete_subject_confirm'))) deleteSubject(subject.id); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 className="w-5 h-5" /></button>
+              <button onClick={() => handleOpenEditModal(subject)} className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition"><PencilIcon className="w-5 h-5" /></button>
+              <button onClick={() => { setDeleteTarget(subject.id); setShowDeleteModal(true); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"><TrashIcon className="w-5 h-5" /></button>
             </div>
           </div>
         )) : (
           <div className="col-span-full py-20 text-center bg-white rounded-[32px] border border-dashed border-slate-200">
-             <BookOpen className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+             <BookOpenIcon className="w-16 h-16 text-slate-100 mx-auto mb-4" />
              <p className="text-slate-400 font-bold italic">لا توجد مواد مضافة لهذا المستوى بعد.</p>
           </div>
         )}
@@ -168,7 +180,7 @@ const Subjects: React.FC = () => {
           onClick={handleOpenAddModal}
           className="border-2 border-dashed border-slate-200 rounded-[24px] p-6 flex flex-col items-center justify-center text-slate-400 hover:border-primary-500 hover:text-primary-600 hover:bg-primary-50/30 transition-all min-h-[140px] group"
         >
-          <Plus className="w-8 h-8 mb-2 group-hover:scale-125 transition-transform" />
+          <PlusIcon className="w-8 h-8 mb-2 group-hover:scale-125 transition-transform" />
           <span className="text-sm font-black tracking-wide">أضف مادة جديدة</span>
         </button>
       </div>
@@ -182,7 +194,7 @@ const Subjects: React.FC = () => {
                   <p className="text-xs text-slate-400 font-bold uppercase mt-1">{getLevelName(selectedLevel)}</p>
                </div>
                <button onClick={() => setShowModal(false)} className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
-                 <X className="w-6 h-6" />
+                 <XMarkIcon className="w-6 h-6" />
                </button>
              </div>
              <div className="p-8 space-y-6">
@@ -191,7 +203,7 @@ const Subjects: React.FC = () => {
                   <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-1">{t('total_points')}</label>
                   <div className="relative">
                     <input type="number" min="1" max="100" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all font-black text-slate-800" value={formData.totalPoints} onChange={e => setFormData({...formData, totalPoints: parseInt(e.target.value) || 20})} />
-                    <Calculator className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-3.5 w-5 h-5 text-slate-400`} />
+                    <CalculatorIcon className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-3.5 w-5 h-5 text-slate-400`} />
                   </div>
                 </div>
              </div>
@@ -201,6 +213,26 @@ const Subjects: React.FC = () => {
                  {editingId ? t('save_changes') : t('add')}
                </button>
              </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[32px] shadow-soft-xl w-full max-w-sm overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
+            <div className="p-8 border-b border-slate-100 bg-red-50/50">
+              <h3 className="text-xl font-black text-red-600">{t('delete_subject_confirm')}</h3>
+              <p className="text-sm text-slate-500 mt-2">هذا الإجراء لا يمكن التراجع عنه</p>
+            </div>
+            <div className="p-8 pt-6 flex justify-end gap-3">
+              <button onClick={() => setShowDeleteModal(false)} className="px-6 py-3 text-slate-600 hover:bg-slate-100 rounded-2xl font-bold transition-all">
+                {t('cancel')}
+              </button>
+              <button onClick={handleDeleteConfirm} className="px-6 py-3 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-all font-black shadow-lg shadow-red-200 active:scale-95">
+                {t('delete')}
+              </button>
+            </div>
           </div>
         </div>
       )}

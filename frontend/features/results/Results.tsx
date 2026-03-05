@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { FileCheck, Save, Search, Info, ChevronDown, PlusCircle, Upload, Printer, FileSpreadsheet, Download, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { DocumentCheckIcon, ArrowDownOnSquareIcon, MagnifyingGlassIcon, InformationCircleIcon, ChevronDownIcon, PlusCircleIcon, ArrowUpTrayIcon, PrinterIcon, TableCellsIcon, ArrowDownTrayIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/solid';
 import { Result, Classroom } from '../../types';
 import { useSchoolContext } from '../../context/SchoolContext';
 import Input from '../../components/Input';
@@ -243,6 +243,42 @@ const Results: React.FC = () => {
       return [...prev, { studentId, score: '', comment }];
     });
   }, []);
+
+  // Handle save individual result
+  const handleSaveIndividualResult = useCallback(async (studentId: string) => {
+    if (!selectedSubjectId) {
+      notify(t('fill_all_fields'), 'error');
+      return;
+    }
+
+    const studentMark = marks.find(m => m.studentId === studentId);
+    if (!studentMark || studentMark.score === '' || studentMark.score.trim() === '') {
+      notify(t('enter_score_first'), 'error');
+      return;
+    }
+
+    const student = students.find(s => s.id === studentId);
+    const subject = subjects.find(s => s.id === selectedSubjectId);
+    
+    const newResult: Result = {
+      studentId: studentId,
+      subjectId: selectedSubjectId,
+      score: parseFloat(studentMark.score),
+      semester: selectedSemester,
+      type: evaluationType,
+      comment: studentMark.comment || undefined
+    };
+
+    const activityMessage = `تم حفظ علامة ${student?.fullName || 'طالب'} في مادة ${subject?.name || 'مادة'} (${evaluationType === 'test' ? 'اختبار' : 'امتحان'})`;
+
+    try {
+      await saveResults([newResult], activityMessage);
+      notify(t('result_saved_successfully'), 'success');
+    } catch (error) {
+      console.error('Error saving individual result:', error);
+      notify(t('error_saving_result'), 'error');
+    }
+  }, [marks, selectedSubjectId, selectedSemester, evaluationType, saveResults, notify, t, students, subjects]);
 
   // Handle save results
   const handleSaveResults = useCallback(async () => {
@@ -714,7 +750,7 @@ const Results: React.FC = () => {
         <div>
           <h2 className="text-3xl font-black text-slate-800 flex items-center gap-3">
             <div className="p-2 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-100">
-              <FileCheck className="w-8 h-8" />
+              <DocumentCheckIcon className="w-8 h-8" />
             </div>
             {t('results_management')}
           </h2>
@@ -729,11 +765,11 @@ const Results: React.FC = () => {
             disabled={!selectedClassId || levelSubjects.length === 0}
             title="تحميل نموذج Excel"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <TableCellsIcon className="w-4 h-4" />
             <span>تحميل Excel</span>
           </button>
           <label className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition shadow-md cursor-pointer text-sm font-bold">
-            <Upload className="w-4 h-4" />
+            <ArrowUpTrayIcon className="w-4 h-4" />
             <span>رفع Excel</span>
             <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
           </label>
@@ -743,7 +779,7 @@ const Results: React.FC = () => {
             disabled={!selectedClassId || classStudents.length === 0}
             title="طباعة كشوف النقاط"
           >
-            <Printer className="w-4 h-4" />
+            <PrinterIcon className="w-4 h-4" />
             <span>طباعة</span>
           </button>
         </div>
@@ -802,7 +838,7 @@ const Results: React.FC = () => {
                       ))
                     )}
                   </select>
-                  <ChevronDown className="absolute left-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <ChevronDownIcon className="absolute left-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
               </div>
 
@@ -821,7 +857,7 @@ const Results: React.FC = () => {
                     <option value={2}>{t('semester_2')}</option>
                     <option value={3}>{t('semester_3')}</option>
                   </select>
-                  <ChevronDown className="absolute left-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <ChevronDownIcon className="absolute left-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
               </div>
 
@@ -849,16 +885,16 @@ const Results: React.FC = () => {
                       ))
                     )}
                   </select>
-                  <ChevronDown className="absolute left-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <ChevronDownIcon className="absolute left-4 top-4 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
               </div>
             </div>
 
             {/* Info Box */}
             <div className="p-4 bg-primary-50 rounded-2xl border border-primary-100 flex items-start gap-3">
-              <Info className="w-5 h-5 text-primary-600 shrink-0 mt-0.5" />
+              <InformationCircleIcon className="w-5 h-5 text-primary-600 shrink-0 mt-0.5" />
               <p className="text-[11px] text-primary-700 leading-relaxed font-bold">
-                المواد المعروضة مرتبطة بالمستوى الدراسي للفوج. أي مادة تضيفها في "المستوى الأول" ستظهر لجميع أفواج السنة الأولى.
+                المواد المعروضة مرتبطة بالمستوى الدراسي للفوج. أي مادة تضيفها في المستوى ستظهر لجميع أفواج السنة .
               </p>
             </div>
 
@@ -899,7 +935,7 @@ const Results: React.FC = () => {
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
                 />
-                <Search className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} top-3 w-5 h-5 text-slate-300`} />
+                <MagnifyingGlassIcon className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} top-3 w-5 h-5 text-slate-300`} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black text-slate-400 uppercase bg-slate-100 px-3 py-1 rounded-full">
@@ -919,7 +955,7 @@ const Results: React.FC = () => {
                     <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                       {t('student')}
                     </th>
-                    <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-48 text-center">
+                    <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-32 text-center">
                       العلامة
                     </th>
                     <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-32 text-center">
@@ -927,6 +963,9 @@ const Results: React.FC = () => {
                     </th>
                     <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
                       ملاحظة
+                    </th>
+                    <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-32 text-center">
+                      إجراءات
                     </th>
                   </tr>
                 </thead>
@@ -1004,21 +1043,21 @@ const Results: React.FC = () => {
                               if (resultStatus === 'approved') {
                                 return (
                                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                    <CheckCircle className="w-3 h-3" />
+                                    <CheckCircleIcon className="w-3 h-3" />
                                     موافق
                                   </span>
                                 );
                               } else if (resultStatus === 'rejected') {
                                 return (
                                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                                    <XCircle className="w-3 h-3" />
+                                    <XCircleIcon className="w-3 h-3" />
                                     مرفوض
                                   </span>
                                 );
                               } else {
                                 return (
                                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
-                                    <Clock className="w-3 h-3" />
+                                    <ClockIcon className="w-3 h-3" />
                                     قيد المراجعة
                                   </span>
                                 );
@@ -1034,13 +1073,27 @@ const Results: React.FC = () => {
                               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
                             />
                           </td>
+                          <td className="px-8 py-4 text-center">
+                            <button
+                              onClick={() => handleSaveIndividualResult(student.id)}
+                              disabled={!score || score.trim() === ''}
+                              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+                                evaluationType === 'test'
+                                  ? 'bg-primary-500 hover:bg-primary-600 text-white shadow-primary-200'
+                                  : 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200'
+                              }`}
+                            >
+                              <CheckCircleIcon className="w-3 h-3" />
+                              حفظ
+                            </button>
+                          </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
                       <td colSpan={5} className="py-20 text-center">
-                        <Search className="w-12 h-12 text-slate-100 mx-auto mb-4" />
+                        <MagnifyingGlassIcon className="w-12 h-12 text-slate-100 mx-auto mb-4" />
                         <p className="text-slate-400 font-bold italic">
                           {!selectedClassId 
                             ? 'يرجى اختيار قسم أولاً' 
@@ -1077,7 +1130,7 @@ const Results: React.FC = () => {
                       : 'bg-orange-600 hover:bg-orange-700 shadow-orange-200'
                   }`}
                 >
-                  <PlusCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                  <PlusCircleIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
                   <span>تثبيت النقاط للفصل {selectedSemester}</span>
                 </button>
               </div>
@@ -1089,11 +1142,11 @@ const Results: React.FC = () => {
                   className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                   disabled={!selectedClassId || levelSubjects.length === 0}
                 >
-                  <FileSpreadsheet className="w-5 h-5" />
+                  <TableCellsIcon className="w-5 h-5" />
                   <span>تحميل كشف Excel شامل</span>
                 </button>
                 <label className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition shadow-md cursor-pointer font-bold">
-                  <Upload className="w-5 h-5" />
+                  <ArrowUpTrayIcon className="w-5 h-5" />
                   <span>رفع ملف Excel</span>
                   <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
                 </label>
@@ -1102,7 +1155,7 @@ const Results: React.FC = () => {
                   className="flex items-center gap-2 px-6 py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                   disabled={!selectedClassId || classStudents.length === 0}
                 >
-                  <Printer className="w-5 h-5" />
+                  <PrinterIcon className="w-5 h-5" />
                   <span>طباعة كشوف النقاط ({selectedSemester === 1 ? 'الفصل 1' : selectedSemester === 2 ? 'الفصل 2' : 'الفصل 3'})</span>
                 </button>
               </div>

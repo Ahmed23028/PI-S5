@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, School, Award, Activity } from 'lucide-react';
+import { UsersIcon, AcademicCapIcon, StarIcon, BoltIcon } from '@heroicons/react/24/solid';
 import { useSchoolContext } from '../context/SchoolContext';
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: any; color: string }> = ({ title, value, icon: Icon, color }) => (
@@ -87,25 +87,25 @@ const Dashboard: React.FC = () => {
         <StatCard 
           title="عدد التلاميذ" 
           value={students.length} 
-          icon={Users} 
+          icon={UsersIcon} 
           color="#0ea5e9" // blue
         />
         <StatCard 
           title="عدد الأقسام" 
           value={classes.length} 
-          icon={School} 
+          icon={AcademicCapIcon} 
           color="#8b5cf6" // purple
         />
         <StatCard 
           title="نسبة النجاح" 
           value={statistics.passRate} 
-          icon={Award} 
+          icon={StarIcon} 
           color="#10b981" // green
         />
         <StatCard 
           title="عدد النتائج" 
           value={statistics.resultsCount} 
-          icon={Activity} 
+          icon={BoltIcon} 
           color="#f59e0b" // amber
         />
       </div>
@@ -202,21 +202,21 @@ const Dashboard: React.FC = () => {
             className="flex items-center justify-between p-3 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition"
           >
             <span>إضافة تلميذ جديد</span>
-            <Users className="w-5 h-5" />
+            <UsersIcon className="w-5 h-5" />
           </button>
           <button 
             onClick={() => navigate('/results')} 
             className="flex items-center justify-between p-3 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition"
           >
             <span>إدخال النتائج</span>
-            <Activity className="w-5 h-5" />
+            <BoltIcon className="w-5 h-5" />
           </button>
           <button 
             onClick={() => navigate('/results')} 
             className="flex items-center justify-between p-3 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition"
           >
             <span>طباعة الكشوفات</span>
-            <Award className="w-5 h-5" />
+            <StarIcon className="w-5 h-5" />
           </button>
         </div>
       </div>

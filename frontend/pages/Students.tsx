@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, FileDown, Edit, Trash2, FileText, X } from 'lucide-react';
+import { PlusIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, PencilIcon, TrashIcon, DocumentTextIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { Student } from '../types';
 import Input from '../components/Input';
 import { useSchoolContext } from '../context/SchoolContext';
@@ -185,14 +185,14 @@ const Students: React.FC = () => {
              onClick={handleExportCSV}
              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition"
            >
-             <FileDown className="w-4 h-4" />
+             <ArrowDownTrayIcon className="w-4 h-4" />
              <span>{t('export_csv')}</span>
            </button>
            <button 
              onClick={openAddModal}
              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-sky-600 transition shadow-sm"
            >
-             <Plus className="w-4 h-4" />
+             <PlusIcon className="w-4 h-4" />
              <span>{t('add_student')}</span>
            </button>
         </div>
@@ -208,7 +208,7 @@ const Students: React.FC = () => {
              onChange={(e) => setSearchTerm(e.target.value)}
              className="w-full"
           />
-          <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
         </div>
         <div className="w-full md:w-64">
            <select 
@@ -269,19 +269,19 @@ const Students: React.FC = () => {
                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-full transition"
                            title={t('report_card')}
                          >
-                           <FileText className="w-4 h-4" />
+                           <DocumentTextIcon className="w-4 h-4" />
                          </button>
                          <button 
                            onClick={() => openEditModal(student)}
                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition"
                          >
-                           <Edit className="w-4 h-4" />
+                           <PencilIcon className="w-4 h-4" />
                          </button>
                          <button 
                            onClick={() => handleDelete(student.id)}
                            className="p-2 text-red-600 hover:bg-red-50 rounded-full transition"
                          >
-                           <Trash2 className="w-4 h-4" />
+                           <TrashIcon className="w-4 h-4" />
                          </button>
                       </td>
                     </tr>
@@ -323,7 +323,7 @@ const Students: React.FC = () => {
                   </div>
                 </div>
                 <button onClick={() => setShowReportModal(false)} className="text-gray-400 hover:text-red-500">
-                  <X className="w-6 h-6" />
+                  <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
 

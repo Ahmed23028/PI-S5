@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSchoolContext } from '../context/SchoolContext';
-import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { CheckCircleIcon, XCircleIcon, ClockIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { Result } from '../types';
 
 const ApproveResults: React.FC = () => {
@@ -52,21 +52,21 @@ const ApproveResults: React.FC = () => {
       case 'approved':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-            <CheckCircle className="w-3 h-3" />
+            <CheckCircleIcon className="w-3 h-3" />
             موافق عليه
           </span>
         );
       case 'rejected':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-            <XCircle className="w-3 h-3" />
+            <XCircleIcon className="w-3 h-3" />
             مرفوض
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
-            <Clock className="w-3 h-3" />
+            <ClockIcon className="w-3 h-3" />
             قيد المراجعة
           </span>
         );
@@ -77,7 +77,7 @@ const ApproveResults: React.FC = () => {
   if (currentUser && currentUser.role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+        <ExclamationTriangleIcon className="w-16 h-16 text-red-500 mb-4" />
         <h2 className="text-2xl font-bold text-gray-800 mb-2">غير مصرح بالوصول</h2>
         <p className="text-gray-600">هذه الصفحة متاحة فقط للإدارة</p>
       </div>
@@ -106,7 +106,7 @@ const ApproveResults: React.FC = () => {
 
       {pendingResults.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <ExclamationTriangleIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 text-lg">لا توجد نتائج قيد المراجعة</p>
         </div>
       ) : (
@@ -155,14 +155,14 @@ const ApproveResults: React.FC = () => {
                           onClick={() => handleApprove(result.id!)}
                           className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-xs"
                         >
-                          <CheckCircle className="w-4 h-4" />
+                          <CheckCircleIcon className="w-4 h-4" />
                           موافقة
                         </button>
                         <button
                           onClick={() => setShowRejectModal(result.id!)}
                           className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs"
                         >
-                          <XCircle className="w-4 h-4" />
+                          <XCircleIcon className="w-4 h-4" />
                           رفض
                         </button>
                       </div>

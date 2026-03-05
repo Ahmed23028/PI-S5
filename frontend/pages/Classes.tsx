@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, School, Users, GraduationCap, Edit, Trash2, Eye, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { PlusIcon, AcademicCapIcon, UsersIcon, AcademicCapIcon as GraduationCapIcon, PencilIcon, TrashIcon, EyeIcon, XMarkIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
 import { useSchoolContext } from '../context/SchoolContext';
 import { Classroom } from '../types';
 import Input from '../components/Input';
@@ -105,7 +105,7 @@ const Classes: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-             <School className="w-8 h-8 text-primary" />
+             <AcademicCapIcon className="w-8 h-8 text-primary" />
              الهيكلة التربوية
            </h2>
            <p className="text-gray-500 mt-1">توزيع الأفواج والأقسام حسب المستويات الدراسية</p>
@@ -114,7 +114,7 @@ const Classes: React.FC = () => {
           onClick={() => openAddModal()}
           className="flex items-center gap-2 px-5 py-2.5 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition shadow-lg"
         >
-          <Plus className="w-5 h-5" />
+          <PlusIcon className="w-5 h-5" />
           <span className="font-bold">إضافة قسم (عام)</span>
         </button>
       </div>
@@ -133,7 +133,7 @@ const Classes: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                    <div className={`p-2 rounded-lg ${levelClasses.length > 0 ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-500'}`}>
-                      <GraduationCap className="w-6 h-6" />
+                      <GraduationCapIcon className="w-6 h-6" />
                    </div>
                    <div>
                       <h3 className="text-lg font-bold text-gray-800">{getLevelName(level)}</h3>
@@ -145,10 +145,10 @@ const Classes: React.FC = () => {
                     onClick={(e) => { e.stopPropagation(); openAddModal(level); }}
                     className="flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-200 text-primary rounded-lg text-sm font-bold hover:bg-blue-50 transition"
                   >
-                    <Plus className="w-4 h-4" />
+                    <PlusIcon className="w-4 h-4" />
                     إضافة فوج
                   </button>
-                  {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                  {isOpen ? <ChevronUpIcon className="w-5 h-5 text-gray-400" /> : <ChevronDownIcon className="w-5 h-5 text-gray-400" />}
                 </div>
               </div>
 
@@ -169,8 +169,8 @@ const Classes: React.FC = () => {
                                   {cls.name}
                                 </h4>
                                 <div className="flex gap-1">
-                                  <button onClick={() => openEditModal(cls)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"><Edit className="w-4 h-4" /></button>
-                                  <button onClick={() => handleDelete(cls.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4" /></button>
+                                  <button onClick={() => openEditModal(cls)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"><PencilIcon className="w-4 h-4" /></button>
+                                  <button onClick={() => handleDelete(cls.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"><TrashIcon className="w-4 h-4" /></button>
                                 </div>
                              </div>
                              
@@ -179,10 +179,10 @@ const Classes: React.FC = () => {
                                onClick={() => openStudentsModal(cls)}
                              >
                                <div className="flex items-center gap-1.5">
-                                 <Users className="w-4 h-4 text-gray-400" />
+                                 <UsersIcon className="w-4 h-4 text-gray-400" />
                                  <span>{count} تلميذ</span>
                                </div>
-                               <Eye className="w-4 h-4 text-gray-300 group-hover:text-primary" />
+                               <EyeIcon className="w-4 h-4 text-gray-300 group-hover:text-primary" />
                              </div>
 
                              {/* Progress Bar */}
@@ -198,13 +198,13 @@ const Classes: React.FC = () => {
                         onClick={() => openAddModal(level)}
                         className="border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-gray-400 hover:border-primary hover:text-primary hover:bg-blue-50 transition min-h-[100px]"
                       >
-                        <Plus className="w-6 h-6 mb-1" />
+                        <PlusIcon className="w-6 h-6 mb-1" />
                         <span className="text-sm font-medium">فوج جديد</span>
                       </button>
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-400 flex flex-col items-center">
-                      <School className="w-12 h-12 mb-2 opacity-20" />
+                      <AcademicCapIcon className="w-12 h-12 mb-2 opacity-20" />
                       <p className="mb-4">لا توجد أقسام مسجلة في هذا المستوى</p>
                       <button 
                         onClick={() => openAddModal(level)}
@@ -228,7 +228,7 @@ const Classes: React.FC = () => {
              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                <h3 className="text-xl font-bold text-gray-800">{editingId ? 'تعديل قسم' : 'إضافة قسم جديد'}</h3>
                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-red-500 transition">
-                 <X className="w-6 h-6" />
+                 <XMarkIcon className="w-6 h-6" />
                </button>
              </div>
              <div className="p-6 space-y-4">
@@ -279,7 +279,7 @@ const Classes: React.FC = () => {
                  <p className="text-sm text-gray-500 mt-1">المستوى: {getLevelName(selectedClassForView.level)} | العدد: {getClassStudents().length}</p>
                </div>
                <button onClick={() => setShowStudentsModal(false)} className="text-gray-400 hover:text-red-500 transition bg-white p-2 rounded-full shadow-sm">
-                 <X className="w-5 h-5" />
+                 <XMarkIcon className="w-5 h-5" />
                </button>
              </div>
              
@@ -309,7 +309,7 @@ const Classes: React.FC = () => {
                   </table>
                 ) : (
                   <div className="p-12 text-center flex flex-col items-center justify-center text-gray-400">
-                    <Users className="w-16 h-16 mb-4 opacity-20" />
+                    <UsersIcon className="w-16 h-16 mb-4 opacity-20" />
                     <p>لا يوجد تلاميذ مسجلين في هذا الفوج.</p>
                   </div>
                 )}

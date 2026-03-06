@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, FileDown, Edit, Trash2, FileText, X, Upload, FileSpreadsheet, Download, Info, MapPin, Phone, Calendar } from 'lucide-react';
+import { PlusIcon, MagnifyingGlassIcon, ArrowDownTrayIcon, PencilIcon, TrashIcon, DocumentTextIcon, XMarkIcon, ArrowUpTrayIcon, TableCellsIcon, InformationCircleIcon, MapPinIcon, PhoneIcon, CalendarDaysIcon } from '@heroicons/react/24/solid';
 import { Student, getSubjectDisplayName } from '../../types';
 import Input from '../../components/Input';
 import { useSchoolContext } from '../../context/SchoolContext';
@@ -143,17 +143,17 @@ const Students: React.FC = () => {
         </div>
         <div className="flex flex-wrap gap-2">
            <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition font-bold shadow-sm active:scale-95">
-             <FileDown className="w-4 h-4 text-primary-500" />
+             <ArrowDownTrayIcon className="w-4 h-4 text-primary-500" />
              <span>{t('export_csv')}</span>
            </button>
            {!isTeacher && (
              <>
                <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition font-bold shadow-sm active:scale-95">
-                 <FileSpreadsheet className="w-4 h-4 text-green-500" />
+                 <TableCellsIcon className="w-4 h-4 text-green-500" />
                  <span>{t('import_excel')}</span>
                </button>
                <button onClick={() => { setFormData({ fullName: '', nni: '', gender: 'M', classId: classes[0]?.id || '' }); setEditingId(null); setShowModal(true); }} className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-200 font-bold active:scale-95">
-                 <Plus className="w-4 h-4" />
+                 <PlusIcon className="w-4 h-4" />
                  <span>{t('add_student')}</span>
                </button>
              </>
@@ -164,7 +164,7 @@ const Students: React.FC = () => {
       <div className="bg-white p-6 rounded-[24px] shadow-soft border border-slate-100 flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Input label="" placeholder={t('search_placeholder')} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full" />
-          <Search className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} top-3 w-5 h-5 text-slate-400`} />
+          <MagnifyingGlassIcon className={`absolute ${language === 'ar' ? 'left-3' : 'right-3'} top-3 w-5 h-5 text-slate-400`} />
         </div>
         <div className="w-full md:w-48">
           <input
@@ -183,10 +183,11 @@ const Students: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-[32px] shadow-soft border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-[32px] shadow-soft border border-slate-100">
+        {/* keep search/filter area above and make table itself scrollable */}
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
           <table className={`w-full ${language === 'ar' ? 'text-right' : 'text-left'}`}>
-            <thead className="bg-slate-50 border-b border-slate-100">
+            <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
               <tr>
                 <th className="px-6 py-5 font-black text-slate-500 uppercase tracking-wider text-[11px]">{t('full_name')}</th>
                 <th className="px-6 py-5 font-black text-slate-500 uppercase tracking-wider text-[11px]">{t('nni')}</th>
@@ -221,19 +222,19 @@ const Students: React.FC = () => {
                       </td>
                       <td className="px-4 py-4 text-slate-500 text-sm whitespace-nowrap">
                          <div className="flex items-center gap-2">
-                           <Calendar className="w-3.5 h-3.5 text-slate-300" />
+                           <CalendarDaysIcon className="w-3.5 h-3.5 text-slate-300" />
                            {student.birthDate}
                          </div>
                       </td>
                       <td className="px-4 py-4 text-slate-600 text-sm">
                          <div className="flex items-center gap-2">
-                           <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                           <PhoneIcon className="w-3.5 h-3.5 text-emerald-400" />
                            {student.parentPhone || '--'}
                          </div>
                       </td>
                       <td className="px-6 py-4 text-slate-500 text-sm max-w-[150px] truncate" title={student.address}>
                          <div className="flex items-center gap-2">
-                           <MapPin className="w-3.5 h-3.5 text-red-300" />
+                           <MapPinIcon className="w-3.5 h-3.5 text-red-300" />
                            {student.address || '--'}
                          </div>
                       </td>
@@ -248,11 +249,11 @@ const Students: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => { setViewingStudent(student); setShowReportModal(true); }} className="p-2 text-primary-600 hover:bg-primary-50 rounded-xl transition" title={t('report_card')}><FileText className="w-5 h-5" /></button>
+                          <button onClick={() => { setViewingStudent(student); setShowReportModal(true); }} className="p-2 text-primary-600 hover:bg-primary-50 rounded-xl transition" title={t('report_card')}><DocumentTextIcon className="w-5 h-5" /></button>
                           {!isTeacher && (
                             <>
-                              <button onClick={() => { setFormData(student); setEditingId(student.id); setShowModal(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"><Edit className="w-5 h-5" /></button>
-                              <button onClick={() => { if(window.confirm(t('delete_confirm_student'))) deleteStudent(student.id); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><Trash2 className="w-5 h-5" /></button>
+                              <button onClick={() => { setFormData(student); setEditingId(student.id); setShowModal(true); }} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"><PencilIcon className="w-5 h-5" /></button>
+                              <button onClick={() => { if(window.confirm(t('delete_confirm_student'))) deleteStudent(student.id); }} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"><TrashIcon className="w-5 h-5" /></button>
                             </>
                           )}
                         </div>
@@ -262,7 +263,7 @@ const Students: React.FC = () => {
                 }) : (
                 <tr>
                   <td colSpan={8} className="px-6 py-20 text-center">
-                    <Info className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                    <InformationCircleIcon className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                     <p className="text-slate-400 font-bold">{t('no_data')}</p>
                   </td>
                 </tr>
@@ -281,7 +282,7 @@ const Students: React.FC = () => {
                   <h3 className="text-2xl font-black text-slate-800">{editingId ? t('edit_student') : t('new_student')}</h3>
                   <p className="text-xs text-slate-400 font-bold uppercase mt-1 tracking-widest">تحديث قاعدة بيانات التعليم</p>
                </div>
-               <button onClick={() => setShowModal(false)} className="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"><X className="w-7 h-7" /></button>
+               <button onClick={() => setShowModal(false)} className="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"><XMarkIcon className="w-7 h-7" /></button>
              </div>
              <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <Input label={t('full_name')} placeholder="الاسم الرباعي" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
@@ -340,7 +341,7 @@ const Students: React.FC = () => {
            <div className="bg-white rounded-[40px] shadow-soft-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300">
               <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h3 className="text-2xl font-black">{t('import_excel')}</h3>
-                <button onClick={() => setShowImportModal(false)}><X className="w-7 h-7 text-slate-400 hover:text-red-500 transition-all" /></button>
+                <button onClick={() => setShowImportModal(false)}><XMarkIcon className="w-7 h-7 text-slate-400 hover:text-red-500 transition-all" /></button>
               </div>
               <div className="p-10 space-y-8">
                  <button onClick={() => {
@@ -350,7 +351,7 @@ const Students: React.FC = () => {
                    XLSX.utils.book_append_sheet(wb, ws, "Students");
                    XLSX.writeFile(wb, "Madrasati_Students_Template.xlsx");
                  }} className="w-full py-5 bg-primary-50 text-primary-700 rounded-3xl font-black border-2 border-primary-100 flex items-center justify-center gap-3 hover:bg-primary-100 transition-all">
-                   <Download className="w-6 h-6" />
+                   <DownloadIcon className="w-6 h-6" />
                    تحميل النموذج الفارغ
                  </button>
                  
@@ -363,7 +364,7 @@ const Students: React.FC = () => {
                  </div>
 
                  <label className={`cursor-pointer bg-slate-50 border-2 border-dashed border-slate-200 rounded-[32px] p-12 flex flex-col items-center justify-center transition-all hover:bg-emerald-50 hover:border-emerald-200 ${!selectedClass ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}>
-                   <Upload className="w-12 h-12 text-emerald-500 mb-4" />
+                   <ArrowUpTrayIcon className="w-12 h-12 text-emerald-500 mb-4" />
                    <span className="font-black text-slate-600">اختر ملف Excel من جهازك</span>
                    <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleImportExcel} disabled={!selectedClass} />
                  </label>
@@ -387,7 +388,7 @@ const Students: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <button onClick={() => setShowReportModal(false)} className="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"><X className="w-8 h-8" /></button>
+                <button onClick={() => setShowReportModal(false)} className="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"><XMarkIcon className="w-8 h-8" /></button>
               </div>
               
               <div className="px-10 pt-8 flex gap-4 overflow-x-auto pb-2">

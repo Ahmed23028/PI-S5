@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Save, FileSpreadsheet, Upload, Printer, Download, Sparkles, Layers, Grid3X3, List, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { ArrowDownOnSquareIcon, TableCellsIcon, ArrowUpTrayIcon, PrinterIcon, ArrowDownTrayIcon, SparklesIcon, Squares2X2Icon, Squares3X3Icon, ListBulletIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/solid';
 import { Result, getSubjectDisplayName } from '../types';
 import { useSchoolContext } from '../context/SchoolContext';
 import * as XLSX from 'xlsx';
@@ -262,21 +262,21 @@ const Results: React.FC = () => {
       case 'approved':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-            <CheckCircle className="w-3 h-3" />
+            <CheckCircleIcon className="w-3 h-3" />
             معتمد
           </span>
         );
       case 'rejected':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-            <XCircle className="w-3 h-3" />
+            <XCircleIcon className="w-3 h-3" />
             مرفوض
           </span>
         );
       case 'pending':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
-            <Clock className="w-3 h-3" />
+            <ClockIcon className="w-3 h-3" />
             قيد المراجعة
           </span>
         );
@@ -805,7 +805,7 @@ const Results: React.FC = () => {
         {currentUser?.role === 'teacher' && (
           <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <ClockIcon className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-yellow-800">ملاحظة مهمة للمعلمين</p>
                 <p className="text-sm text-yellow-700 mt-1">
@@ -828,7 +828,7 @@ const Results: React.FC = () => {
               className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md text-sm font-medium"
               title="رفع ملف Excel"
             >
-              <Upload className="w-4 h-4" />
+              <ArrowUpTrayIcon className="w-4 h-4" />
               <span>رفع Excel</span>
             </button>
             <button 
@@ -846,7 +846,7 @@ const Results: React.FC = () => {
               disabled={!selectedClassId || classStudents.length === 0}
               title="طباعة كشوف النقاط"
             >
-              <Printer className="w-4 h-4" />
+              <PrinterIcon className="w-4 h-4" />
               <span>طباعة</span>
             </button>
           </div>
@@ -927,14 +927,14 @@ const Results: React.FC = () => {
                       onClick={() => setViewMode('single')}
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition ${viewMode === 'single' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                      <List className="w-4 h-4" />
+                      <ListBulletIcon className="w-4 h-4" />
                       مادة بمادة
                     </button>
                     <button
                       onClick={() => setViewMode('grid')}
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition ${viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                      <Grid3X3 className="w-4 h-4" />
+                      <Squares3X3Icon className="w-4 h-4" />
                       عرض شامل
                     </button>
                   </div>
@@ -967,7 +967,7 @@ const Results: React.FC = () => {
                     onClick={handleSaveSingle}
                     className="w-48 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 shadow-sm"
                   >
-                    <Save className="w-5 h-5" />
+                    <ArrowDownOnSquareIcon className="w-5 h-5" />
                     <span>حفظ النقاط</span>
                   </button>
                  </div>
@@ -979,7 +979,7 @@ const Results: React.FC = () => {
                     onClick={handleSaveGrid}
                     className="w-48 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 shadow-sm"
                   >
-                    <Save className="w-5 h-5" />
+                    <ArrowDownOnSquareIcon className="w-5 h-5" />
                     <span>حفظ جميع النقاط</span>
                   </button>
                  </div>
@@ -1125,7 +1125,7 @@ const Results: React.FC = () => {
             {/* Selection for Template */}
              <div className="mb-8 w-full max-w-3xl bg-blue-50 p-6 rounded-lg border border-blue-100">
                <h4 className="text-blue-800 font-bold mb-4 flex items-center gap-2 justify-center">
-                 <Download className="w-5 h-5" />
+                 <ArrowDownTrayIcon className="w-5 h-5" />
                  خطوة 1: تحميل نموذج Excel
                </h4>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -1163,14 +1163,14 @@ const Results: React.FC = () => {
                    onClick={() => handleDownloadTemplate('all', false)}
                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm font-medium shadow-md"
                  >
-                   <Layers className="w-4 h-4" />
+                   <Squares2X2Icon className="w-4 h-4" />
                    نموذج شامل (جميع المواد)
                  </button>
                  <button 
                    onClick={() => handleDownloadTemplate('all', true)}
                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2 text-sm font-medium shadow-md"
                  >
-                   <Sparkles className="w-4 h-4" />
+                   <SparklesIcon className="w-4 h-4" />
                    ملف تجريبي شامل (نقاط عشوائية)
                  </button>
                </div>
@@ -1178,14 +1178,14 @@ const Results: React.FC = () => {
              </div>
 
             <div className="bg-green-50 p-6 rounded-full mb-4">
-              <Upload className="w-12 h-12 text-green-600" />
+              <ArrowUpTrayIcon className="w-12 h-12 text-green-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-800 mb-2">خطوة 2: رفع الملف المملوء</h3>
             <p className="text-gray-500 mb-8 max-w-md">قم برفع الملف الذي قمت بتعبئته. سيقوم النظام بالتعرف تلقائياً على الأعمدة (المواد) الموجودة.</p>
             
             <label className="cursor-pointer bg-white border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-primary hover:bg-blue-50 transition w-full max-w-lg">
                <div className="flex flex-col items-center">
-                 <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                 <ArrowUpTrayIcon className="w-8 h-8 text-gray-400 mb-2" />
                  <span className="font-medium text-gray-600">انقر لرفع ملف Excel</span>
                  <span className="text-sm text-gray-400 mt-1">أو اسحب الملف هنا</span>
                </div>

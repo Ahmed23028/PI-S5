@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, School, Globe, AlertCircle, Loader2 } from 'lucide-react';
+import { LockClosedIcon, EnvelopeIcon, BuildingLibraryIcon, GlobeAltIcon, ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import Input from '../../components/Input';
 import { useTranslation } from 'react-i18next';
 import { useSchoolContext } from '../../context/SchoolContext';
@@ -71,14 +71,14 @@ const Login: React.FC = () => {
         onClick={toggleLanguage}
         className="absolute top-4 right-4 rtl:right-auto rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm hover:bg-slate-50 text-slate-700 transition font-bold border border-slate-200"
       >
-        <Globe className="w-4 h-4 text-primary-500" />
+        <GlobeAltIcon className="w-4 h-4 text-primary-500" />
         <span className="text-sm">{language === 'ar' ? t('lang_switch_fr') : t('lang_switch_ar')}</span>
       </button>
 
       <div className="bg-white p-10 rounded-[40px] shadow-soft-xl w-full max-w-md border border-slate-100">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary-50 text-primary-600 mb-6 shadow-inner">
-            <School className="w-10 h-10" />
+            <BuildingLibraryIcon className="w-10 h-10" />
           </div>
           <h1 className="text-3xl font-black text-slate-800">{t('login_title')}</h1>
           <p className="text-slate-500 mt-2 font-medium">{t('login_subtitle')}</p>
@@ -88,7 +88,7 @@ const Login: React.FC = () => {
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm border border-red-100 animate-in fade-in slide-in-from-top-2">
               <div className="flex items-center gap-2 font-black mb-1">
-                 <AlertCircle className="w-4 h-4" />
+                 <ExclamationTriangleIcon className="w-4 h-4" />
                  {t('connection_error')}
               </div>
               <p className="font-bold leading-relaxed">{error}</p>
@@ -104,7 +104,7 @@ const Login: React.FC = () => {
                 placeholder={t('login_placeholder_username')}
                 required
              />
-             <Mail className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-[42px] w-5 h-5 text-slate-400`} />
+             <EnvelopeIcon className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-[42px] w-5 h-5 text-slate-400`} />
           </div>
 
           <div className="relative">
@@ -116,7 +116,7 @@ const Login: React.FC = () => {
                 placeholder="••••••"
                 required
              />
-             <Lock className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-[42px] w-5 h-5 text-slate-400`} />
+             <LockClosedIcon className={`absolute ${language === 'ar' ? 'left-4' : 'right-4'} top-[42px] w-5 h-5 text-slate-400`} />
           </div>
 
           <button
@@ -124,7 +124,7 @@ const Login: React.FC = () => {
             disabled={loading}
             className="w-full py-4 px-6 bg-primary-600 text-white rounded-2xl font-black shadow-lg shadow-primary-200 hover:bg-primary-700 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+            {loading && <ArrowPathIcon className="w-5 h-5 animate-spin" />}
             {loading ? t('logging_in') : t('login_btn')}
           </button>
           

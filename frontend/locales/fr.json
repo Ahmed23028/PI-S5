@@ -221,6 +221,9 @@
   "assignments_desc": "Attribuer classes et matières aux enseignants.",
   "assignments_add": "Ajouter une assignation",
   "results_confirm_hint": "Les notes saisies par les enseignants sont en attente. Confirmez-les dans « Révision des Résultats ».",
-  "results_confirm_link": "Révision des Résultats"
+  "results_confirm_link": "Révision des Résultats",
+  "enter_score_first": "Veuillez saisir une note d'abord",
+  "result_saved_successfully": "Note enregistrée avec succès",
+  "error_saving_result": "Erreur lors de l'enregistrement de la note"
 }
 

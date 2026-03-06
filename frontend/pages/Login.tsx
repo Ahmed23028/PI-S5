@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, School, WifiOff } from 'lucide-react';
+import { LockClosedIcon, EnvelopeIcon, BuildingLibraryIcon, WifiIcon } from '@heroicons/react/24/solid';
 import Input from '../components/Input';
 import { useTranslation } from 'react-i18next';
 
@@ -61,7 +61,7 @@ const Login: React.FC = () => {
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
-            <School className="w-8 h-8" />
+            <BuildingLibraryIcon className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">{t('login_title')}</h1>
           <p className="text-gray-500 mt-2">{t('login_subtitle')}</p>
@@ -71,7 +71,7 @@ const Login: React.FC = () => {
           {error && (
             <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center flex flex-col items-center gap-1">
               <span className="flex items-center gap-2 font-bold">
-                 <WifiOff className="w-4 h-4" />
+                 <WifiIcon className="w-4 h-4" />
                  {t('connection_error')}
               </span>
               <span>{error}</span>
@@ -87,7 +87,7 @@ const Login: React.FC = () => {
                 placeholder="admin"
                 required
              />
-             <Mail className="absolute left-3 top-9 w-4 h-4 text-gray-400" />
+             <EnvelopeIcon className="absolute left-3 top-9 w-4 h-4 text-gray-400" />
           </div>
 
           <div className="relative">
@@ -99,7 +99,7 @@ const Login: React.FC = () => {
                 placeholder="••••••"
                 required
              />
-             <Lock className="absolute left-3 top-9 w-4 h-4 text-gray-400" />
+             <LockClosedIcon className="absolute left-3 top-9 w-4 h-4 text-gray-400" />
           </div>
 
           <button

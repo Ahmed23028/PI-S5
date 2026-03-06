@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   PieChart, Pie, Cell, AreaChart, Area 
 } from 'recharts';
-import { Trophy, TrendingUp, Users, AlertCircle, Calculator, BookOpen } from 'lucide-react';
+import { TrophyIcon, ArrowTrendingUpIcon, UsersIcon, ExclamationTriangleIcon, CalculatorIcon, BookOpenIcon } from '@heroicons/react/24/solid';
 import { useSchoolContext } from '../context/SchoolContext';
 
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6'];
@@ -88,7 +88,7 @@ const Statistics: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex flex-col">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <TrendingUp className="w-8 h-8 text-primary" />
+            <ArrowTrendingUpIcon className="w-8 h-8 text-primary" />
             الإحصائيات العامة
           </h2>
           <p className="text-gray-500 mt-1">نظرة شاملة على أداء المدرسة والتلاميذ</p>
@@ -112,28 +112,28 @@ const Statistics: React.FC = () => {
         <StatCard 
           title="المعدل العام للمدرسة" 
           value={stats.globalAverage && stats.globalAverage > 0 ? `${stats.globalAverage.toFixed(2)} / 20` : '0.00 / 20'} 
-          icon={Calculator} 
+          icon={CalculatorIcon} 
           color="#3b82f6" // blue
           subtext="متوسط معدلات جميع التلاميذ"
         />
         <StatCard 
           title="نسبة النجاح" 
           value={`${stats.passRate}%`} 
-          icon={TrendingUp} 
+          icon={ArrowTrendingUpIcon} 
           color="#10b981" // green
           subtext={`${stats.passFailData[0].value} تلميذ ناجح`}
         />
         <StatCard 
           title="القسم المتفوق" 
           value={stats.bestClass?.name || '-'} 
-          icon={Trophy} 
+          icon={TrophyIcon} 
           color="#f59e0b" // amber
           subtext={stats.bestClass && stats.bestClass.avg ? `معدل: ${stats.bestClass.avg.toFixed(2)}` : ''}
         />
         <StatCard 
           title="التلاميذ المتعثرين" 
           value={stats.failedStudents} 
-          icon={AlertCircle} 
+          icon={ExclamationTriangleIcon} 
           color="#ef4444" // red
           subtext="معدل أقل من 10/20"
         />
@@ -218,7 +218,7 @@ const Statistics: React.FC = () => {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-            <BookOpen className="w-5 h-5" />
+            <BookOpenIcon className="w-5 h-5" />
           </div>
           <h3 className="text-lg font-bold text-gray-800">أداء التلاميذ حسب المادة</h3>
         </div>

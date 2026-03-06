@@ -221,6 +221,9 @@
   "assignments_desc": "ربط الأقسام والمواد بالمعلمين.",
   "assignments_add": "إضافة تعيين",
   "results_confirm_hint": "النتائج التي يدخلها المعلمون تظهر «قيد المراجعة». وافق عليها من صفحة «مراجعة النتائج».",
-  "results_confirm_link": "مراجعة النتائج"
+  "results_confirm_link": "مراجعة النتائج",
+  "enter_score_first": "يرجى إدخال علامة أولاً",
+  "result_saved_successfully": "تم حفظ العلامة بنجاح",
+  "error_saving_result": "خطأ في حفظ العلامة"
 }
 

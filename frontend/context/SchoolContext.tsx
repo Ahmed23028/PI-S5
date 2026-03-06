@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Student, Classroom, Subject, Result, Activity, User, getSubjectDisplayName } from '../types';
-import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
+import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 interface Notification {
   id: string;
@@ -20,6 +20,7 @@ interface SchoolContextType {
   loading: boolean;
   error: string | null;
   t: (key: string, ...args: string[]) => string;
+  language: string;
   addStudent: (student: Omit<Student, 'id'>) => Promise<void>;
   bulkAddStudents: (students: Omit<Student, 'id'>[]) => Promise<void>;
   updateStudent: (student: Student) => Promise<void>;
@@ -30,7 +31,7 @@ interface SchoolContextType {
   addSubject: (subject: Omit<Subject, 'id'>) => Promise<void>;
   updateSubject: (subject: Subject) => Promise<void>;
   deleteSubject: (id: string) => Promise<void>;
-  saveResults: (newResults: Result[]) => Promise<void>;
+  saveResults: (newResults: Result[], customActivityMessage?: string) => Promise<void>;
   approveResult: (resultId: string) => Promise<void>;
   rejectResult: (resultId: string, reason?: string) => Promise<void>;
   fetchPendingResults: () => Promise<Result[]>;
@@ -49,7 +50,15 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [classes, setClasses] = useState<Classroom[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [results, setResults] = useState<Result[]>([]);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<Activity[]>(() => {
+    // Charger les activités depuis localStorage au démarrage
+    try {
+      const saved = localStorage.getItem('schoolActivities');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +85,8 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setActivities(prev => {
       // إضافة في البداية، والاحتفاظ بآخر 50 نشاط فقط
       const updated = [newActivity, ...prev].slice(0, 50);
+      // حفظ في localStorage
+      localStorage.setItem('schoolActivities', JSON.stringify(updated));
       return updated;
     });
   };
@@ -368,7 +379,7 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  const saveResults = async (newResults: Result[]) => {
+  const saveResults = async (newResults: Result[], customActivityMessage?: string) => {
     try {
       // إضافة status: 'pending' لكل نتيجة جديدة
       const resultsWithStatus = newResults.map(r => ({
@@ -379,7 +390,8 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const res = await apiRequest(`${API_BASE_URL}/results/bulk_create/`, 'POST', resultsWithStatus);
       if (res?.ok) { 
         await fetchData(); 
-        addActivity('result', t('act_results_saved') + ` (${newResults.length} نتيجة)`);
+        const activityMessage = customActivityMessage || t('act_results_saved') + ` (${newResults.length} نتيجة)`;
+        addActivity('result', activityMessage);
         notify(t('act_results_saved')); 
       } else {
         const errorData = await res?.json().catch(() => ({}));
@@ -514,6 +526,7 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         loading,
         error,
         t,
+        language: i18n.language === 'ar' ? 'ar' : 'fr',
         addStudent,
         bulkAddStudents,
         updateStudent,
@@ -544,13 +557,13 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({ children }) 
               n.type === 'error' ? 'border-red-100 text-red-800' : 'border-blue-100 text-blue-800'}`}
           >
             <div className="flex items-center gap-3">
-              {n.type === 'success' && <CheckCircle className="w-5 h-5 text-emerald-500" />}
-              {n.type === 'error' && <XCircle className="w-5 h-5 text-red-500" />}
-              {n.type === 'info' && <AlertCircle className="w-5 h-5 text-blue-500" />}
+              {n.type === 'success' && <CheckCircleIcon className="w-5 h-5 text-emerald-500" />} 
+              {n.type === 'error' && <XCircleIcon className="w-5 h-5 text-red-500" />} 
+              {n.type === 'info' && <ExclamationTriangleIcon className="w-5 h-5 text-blue-500" />} 
               <span className="font-black text-sm">{n.message}</span>
             </div>
             <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="p-1 hover:bg-slate-100 rounded-full">
-              <X className="w-4 h-4 opacity-50" />
+              <XMarkIcon className="w-4 h-4 opacity-50" />
             </button>
           </div>
         ))}
